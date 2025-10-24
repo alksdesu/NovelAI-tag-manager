@@ -1995,6 +1995,7 @@
         const messageClasses = ['ntm-assistant__message', `ntm-assistant__message--${role}`];
         if (isError) messageClasses.push('ntm-assistant__message--error');
         if (isPending) messageClasses.push('ntm-assistant__message--pending');
+        const deleteDisabled = isPending || state.assistant.pendingMessageId === message.id;
         const errorText = message.metadata?.error
             ? `<div class="ntm-assistant__message-error">${escapeHtml(message.metadata.error)}</div>`
             : '';
@@ -2017,7 +2018,7 @@
                         <div class="ntm-assistant__message-actions">
                             <button type="button" class="ntm-icon-btn" data-action="assistant-copy-message" data-id="${escapeHtmlAttr(message.id)}">${escapeHtml(actions.copy || 'Copy')}</button>
                             ${retryButton}
-                            <button type="button" class="ntm-icon-btn" data-action="assistant-delete-message" data-id="${escapeHtmlAttr(message.id)}">${escapeHtml(actions.delete || 'Delete')}</button>
+                            <button type="button" class="ntm-icon-btn" data-action="assistant-delete-message" data-id="${escapeHtmlAttr(message.id)}"${deleteDisabled ? ' disabled aria-disabled="true"' : ''}>${escapeHtml(actions.delete || 'Delete')}</button>
                         </div>
                     </header>
                     <div class="ntm-assistant__message-content">${contentHtml}</div>
@@ -3537,7 +3538,7 @@
         conversation.title = snippet;
     }
 
-    async function handleAssistantSend() {
+    async function handleAssistantSend(options = {}) {
         if (state.assistant.sending) {
             return;
         }
@@ -3552,12 +3553,16 @@
             toggleAssistantSettings(true);
             return;
         }
-        const composerValue = typeof state.assistant.compose === 'string'
-            ? state.assistant.compose.trim()
-            : '';
-        const runtimeAttachments = Array.isArray(state.assistant.attachments)
-            ? state.assistant.attachments.slice()
-            : [];
+        const hasOverrideContent = typeof options.content === 'string';
+        const rawContent = hasOverrideContent
+            ? options.content
+            : (typeof state.assistant.compose === 'string' ? state.assistant.compose : '');
+        const composerValue = typeof rawContent === 'string' ? rawContent.trim() : '';
+        const runtimeAttachments = Array.isArray(options.attachments)
+            ? options.attachments.slice()
+            : (Array.isArray(state.assistant.attachments)
+                ? state.assistant.attachments.slice()
+                : []);
         if (!composerValue && !runtimeAttachments.length) {
             return;
         }
@@ -3565,15 +3570,33 @@
         if (!conversation) {
             return;
         }
-        const storageAttachments = prepareAssistantAttachmentsForStorage(runtimeAttachments);
-        const userMessage = createAssistantMessage('user', composerValue || '(empty message)', storageAttachments, {
-            status: 'pending',
-        });
-        appendAssistantMessage(conversation, userMessage);
+        let userMessage = null;
+        let storageAttachments = prepareAssistantAttachmentsForStorage(runtimeAttachments);
+        if (options.reuseMessageId) {
+            userMessage = conversation.messages.find(msg => msg.id === options.reuseMessageId);
+            if (!userMessage) {
+                showToast('Could not locate the original message.', 'warn');
+                return;
+            }
+            const metadata = { ...(userMessage.metadata || {}) };
+            metadata.status = 'pending';
+            delete metadata.error;
+            userMessage.content = composerValue || '(empty message)';
+            userMessage.attachments = storageAttachments;
+            userMessage.metadata = metadata;
+            userMessage.updatedAt = Date.now();
+        } else {
+            userMessage = createAssistantMessage('user', composerValue || '(empty message)', storageAttachments, {
+                status: 'pending',
+            });
+            appendAssistantMessage(conversation, userMessage);
+        }
         mapRuntimeAttachmentsToConversation(userMessage.id, runtimeAttachments);
         saveData();
         const preparedAttachments = await prepareAssistantAttachmentsForSend(runtimeAttachments);
-        clearAssistantComposer();
+        if (!options.keepComposerState) {
+            clearAssistantComposer();
+        }
         state.assistant.sending = true;
         state.assistant.error = '';
         state.assistant.pendingMessageId = userMessage.id;
@@ -3649,6 +3672,12 @@
         if (!conversation || !Array.isArray(conversation.messages)) return;
         const index = conversation.messages.findIndex(msg => msg.id === messageId);
         if (index === -1) return;
+        const message = conversation.messages[index];
+        const status = message?.metadata?.status;
+        if (status === 'pending' || status === 'streaming' || state.assistant.pendingMessageId === messageId) {
+            showToast('Cannot delete a message while it is being sent.', 'warn');
+            return;
+        }
         const [removed] = conversation.messages.splice(index, 1);
         if (removed) {
             purgeAssistantMessageAttachments(removed);
@@ -3674,6 +3703,10 @@
             return;
         }
         const userMessage = conversation.messages[previousUserIndex];
+        if (state.assistant.sending) {
+            showToast('Wait for the current request to finish before retrying.', 'warn');
+            return;
+        }
         const restoredAttachments = restoreRuntimeAttachmentsForMessage(userMessage.id);
         const composerAttachments = [];
         restoredAttachments.forEach(att => {
@@ -3695,6 +3728,10 @@
 
     function assistantRegenerateMessage(messageId) {
         if (!messageId) return;
+        if (state.assistant.sending) {
+            showToast('Wait for the current request to finish before regenerating.', 'warn');
+            return;
+        }
         const conversation = getActiveAssistantConversation();
         if (!conversation || !Array.isArray(conversation.messages)) return;
         const index = conversation.messages.findIndex(msg => msg.id === messageId);
@@ -3704,6 +3741,11 @@
             showToast('Regenerate is only available for assistant responses.', 'warn');
             return;
         }
+        const messageStatus = message?.metadata?.status;
+        if (messageStatus === 'pending' || messageStatus === 'streaming') {
+            showToast('Please wait for the response to finish before regenerating.', 'warn');
+            return;
+        }
         const previousUserIndex = findPreviousUserMessageIndex(conversation.messages, index);
         if (previousUserIndex === -1) {
             showToast('Could not locate the originating user message.', 'warn');
@@ -3711,22 +3753,24 @@
         }
         const userMessage = conversation.messages[previousUserIndex];
         const restoredAttachments = restoreRuntimeAttachmentsForMessage(userMessage.id);
-        const composerAttachments = [];
+        const regeneratedAttachments = [];
         restoredAttachments.forEach(att => {
             if (att.file) {
                 const recreated = createAssistantAttachmentFromFile(att.file);
                 if (recreated) {
-                    composerAttachments.push(recreated);
+                    regeneratedAttachments.push(recreated);
                 }
             }
         });
         // Remove the previous assistant message only; keep the user message for context
         conversation.messages.splice(index, 1);
         saveData();
-        state.assistant.compose = userMessage.content || '';
-        state.assistant.attachments = composerAttachments;
         scheduleRender();
-        handleAssistantSend();
+        handleAssistantSend({
+            reuseMessageId: userMessage.id,
+            content: userMessage.content || '',
+            attachments: regeneratedAttachments,
+        });
     }
 
     function findPreviousUserMessageIndex(messages, startIndex) {
