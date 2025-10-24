@@ -1216,6 +1216,7 @@
         `;
 
         const activePage = state.ui.activePage || 'library';
+        const previousActivePage = root.dataset.activePage || '';
         let pageContent = '';
         switch (activePage) {
             case 'safebooru':
@@ -1246,10 +1247,14 @@
 
         root.className = shellClasses.filter(Boolean).join(' ');
         
+        // 保存当前页面容器的滚动位置，防止重渲染后跳回顶部
+        const pageContainer = root.querySelector('.ntm-page-container');
+        const savedPageScrollTop = pageContainer ? pageContainer.scrollTop : 0;
+
         // 保存AI助手线程容器的滚动位置
         const assistantThreadContainer = root.querySelector('.ntm-assistant__thread');
         const savedScrollTop = assistantThreadContainer ? assistantThreadContainer.scrollTop : 0;
-        
+
         root.innerHTML = `
             <div class="ntm-glow"></div>
             <div class="ntm-panel">
@@ -1284,6 +1289,8 @@
             ${danbooruViewerHtml}
         `;
 
+        root.dataset.activePage = activePage;
+
         applyPanelSize(state.panelSize);
         renderHiddenToggle(locale);
         renderMinimizedToggle(locale);
@@ -1291,6 +1298,16 @@
         attachInnerEvents();
         renderContextMenu();
         
+        // 恢复AI助手页面的滚动位置，避免因重渲染导致的跳动
+        if (previousActivePage === 'assistant' && activePage === 'assistant' && savedPageScrollTop > 0) {
+            requestAnimationFrame(() => {
+                const newPageContainer = root.querySelector('.ntm-page-container');
+                if (newPageContainer) {
+                    newPageContainer.scrollTop = savedPageScrollTop;
+                }
+            });
+        }
+
         // 恢复AI助手线程容器的滚动位置，如果有保存的位置就恢复，否则滚动到底部
         if (state.ui.activePage === 'assistant') {
             if (savedScrollTop > 0) {
