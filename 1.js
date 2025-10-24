@@ -1300,23 +1300,19 @@
         
         // 恢复AI助手页面的滚动位置，避免因重渲染导致的跳动
         if (previousActivePage === 'assistant' && activePage === 'assistant' && savedPageScrollTop > 0) {
-            requestAnimationFrame(() => {
-                const newPageContainer = root.querySelector('.ntm-page-container');
-                if (newPageContainer) {
-                    newPageContainer.scrollTop = savedPageScrollTop;
-                }
-            });
+            const newPageContainer = root.querySelector('.ntm-page-container');
+            if (newPageContainer) {
+                newPageContainer.scrollTop = savedPageScrollTop;
+            }
         }
 
         // 恢复AI助手线程容器的滚动位置，如果有保存的位置就恢复，否则滚动到底部
         if (state.ui.activePage === 'assistant') {
             if (savedScrollTop > 0) {
-                requestAnimationFrame(() => {
-                    const newAssistantThreadContainer = root.querySelector('.ntm-assistant__thread');
-                    if (newAssistantThreadContainer) {
-                        newAssistantThreadContainer.scrollTop = savedScrollTop;
-                    }
-                });
+                const newAssistantThreadContainer = root.querySelector('.ntm-assistant__thread');
+                if (newAssistantThreadContainer) {
+                    newAssistantThreadContainer.scrollTop = savedScrollTop;
+                }
             } else {
                 scrollAssistantThreadToBottom();
             }
