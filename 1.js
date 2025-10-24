@@ -62,6 +62,8 @@
     const TAG_FORM_MAX_WIDTH = 720;
     const TAG_FORM_MIN_HEIGHT = 320;
     const TAG_FORM_MAX_HEIGHT = 860;
+    const FRAGMENT_PARSE_IDLE_TIMEOUT = 80;
+    const MOTION_REDUCTION_TAG_THRESHOLD = 240;
     const ASSISTANT_MAX_ATTACHMENTS = 6;
     const ASSISTANT_MAX_FILE_BYTES = 12 * 1024 * 1024;
     const ASSISTANT_OBJECT_URL_TTL_MS = 1000 * 60 * 15;
@@ -193,6 +195,10 @@
             ].join('\n'),
         },
     ];
+
+    const reduceMotionMediaQuery = (typeof window !== 'undefined' && typeof window.matchMedia === 'function')
+        ? window.matchMedia('(prefers-reduced-motion: reduce)')
+        : null;
 
     const LOCALE = {
         en: {
@@ -1036,6 +1042,17 @@
     const root = document.createElement('div');
     root.id = 'nai-tag-maestro-root';
 
+    if (reduceMotionMediaQuery) {
+        const handleMotionPreferenceChange = () => {
+            scheduleRender();
+        };
+        if (typeof reduceMotionMediaQuery.addEventListener === 'function') {
+            reduceMotionMediaQuery.addEventListener('change', handleMotionPreferenceChange);
+        } else if (typeof reduceMotionMediaQuery.addListener === 'function') {
+            reduceMotionMediaQuery.addListener(handleMotionPreferenceChange);
+        }
+    }
+
     const assistantAttachmentStore = new Map();
     const assistantMessageAttachmentMap = new Map();
 
@@ -1125,6 +1142,9 @@
 
     let fragmentRenderHandle = null;
     let fragmentRenderHandleType = null;
+    let fragmentParseHandle = null;
+    let fragmentParseHandleType = null;
+    let fragmentParsePendingTagId = null;
 
     function cancelScheduledFragmentRender() {
         if (fragmentRenderHandle === null) {
@@ -1154,6 +1174,67 @@
         } else {
             fragmentRenderHandleType = 'timeout';
             fragmentRenderHandle = setTimeout(invoke, 16);
+        }
+    }
+
+    function cancelScheduledFragmentParse() {
+        if (fragmentParseHandle === null) {
+            fragmentParsePendingTagId = null;
+            return;
+        }
+        if (fragmentParseHandleType === 'idle' && typeof cancelIdleCallback === 'function') {
+            cancelIdleCallback(fragmentParseHandle);
+        } else if (fragmentParseHandleType === 'timeout') {
+            clearTimeout(fragmentParseHandle);
+        }
+        fragmentParseHandle = null;
+        fragmentParseHandleType = null;
+        fragmentParsePendingTagId = null;
+    }
+
+    function recomputeDraftFragments(tagId) {
+        if (!tagId) {
+            return;
+        }
+        const tag = getTagById(tagId);
+        if (!tag) {
+            return;
+        }
+        const draft = ensureTagFormDraft(tag);
+        if (!draft) {
+            return;
+        }
+        const nextFragments = splitTagString(draft.tagString);
+        if (shallowEqualStrings(draft.fragments, nextFragments)) {
+            return;
+        }
+        draft.fragments = nextFragments;
+        scheduleRenderActiveTagFragments();
+    }
+
+    function scheduleFragmentParse(tagId) {
+        if (!tagId) {
+            cancelScheduledFragmentParse();
+            return;
+        }
+        cancelScheduledFragmentParse();
+        fragmentParsePendingTagId = tagId;
+        const run = () => {
+            fragmentParseHandle = null;
+            fragmentParseHandleType = null;
+            const pendingTagId = fragmentParsePendingTagId;
+            fragmentParsePendingTagId = null;
+            if (!pendingTagId) {
+                return;
+            }
+            recomputeDraftFragments(pendingTagId);
+        };
+        if (typeof requestIdleCallback === 'function') {
+            fragmentParseHandleType = 'idle';
+            fragmentParseHandle = requestIdleCallback(run, { timeout: FRAGMENT_PARSE_IDLE_TIMEOUT });
+        } else {
+            fragmentParseHandleType = 'timeout';
+            fragmentParseHandle = setTimeout(run, FRAGMENT_PARSE_IDLE_TIMEOUT);
         }
     }
 
@@ -1211,6 +1292,23 @@
             saveData();
             render();
         });
+    }
+
+    function getTotalTagCount() {
+        const categories = Array.isArray(state.data?.categories) ? state.data.categories : [];
+        return categories.reduce((sum, category) => {
+            const tags = Array.isArray(category?.tags) ? category.tags.length : 0;
+            return sum + tags;
+        }, 0);
+    }
+
+    function shouldReduceMotion() {
+        if (reduceMotionMediaQuery && typeof reduceMotionMediaQuery.matches === 'boolean') {
+            if (reduceMotionMediaQuery.matches) {
+                return true;
+            }
+        }
+        return getTotalTagCount() >= MOTION_REDUCTION_TAG_THRESHOLD;
     }
 
     function render() {
@@ -1305,12 +1403,17 @@
 
         const hiddenClass = settings.hidden ? 'ntm-shell--hidden' : '';
         const minimizedClass = settings.minimized ? 'ntm-shell--minimized' : '';
+        const reduceMotion = shouldReduceMotion();
         const shellClasses = ['ntm-shell', hiddenClass, minimizedClass];
         if (!hasRendered) {
             shellClasses.push('ntm-animate');
         }
+        if (reduceMotion) {
+            shellClasses.push('ntm-shell--reduced-motion');
+        }
 
         root.className = shellClasses.filter(Boolean).join(' ');
+        root.dataset.reduceMotion = reduceMotion ? '1' : '0';
         
         // 保存当前页面容器的滚动位置，防止重渲染后跳回顶部
         const pageContainer = root.querySelector('.ntm-page-container');
@@ -1683,6 +1786,24 @@
             .filter(Boolean);
     }
 
+    function shallowEqualStrings(a, b) {
+        if (a === b) {
+            return true;
+        }
+        if (!Array.isArray(a) || !Array.isArray(b)) {
+            return false;
+        }
+        if (a.length !== b.length) {
+            return false;
+        }
+        for (let i = 0; i < a.length; i += 1) {
+            if (a[i] !== b[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     function createTagFormDraft(tag = {}) {
         return {
             tagId: tag.id || null,
@@ -1705,6 +1826,7 @@
     function resetTagFormDraft() {
         state.ui.tagFormDraft = null;
         state.ui.editingFragment = null;
+        cancelScheduledFragmentParse();
     }
 
     function joinFragmentsPreservingSpacing(fragments = []) {
@@ -5705,9 +5827,8 @@
             return;
         }
         draft.tagString = nextValue;
-        draft.fragments = splitTagString(draft.tagString);
         state.ui.editingFragment = null;
-        scheduleRenderActiveTagFragments();
+        scheduleFragmentParse(tag.id);
     }
 
     function handleTagMetaInput(event) {
@@ -9207,6 +9328,21 @@
 
         .ntm-shell.ntm-animate .ntm-panel {
             animation: ntm-fade-in 480ms ease;
+        }
+
+        #nai-tag-maestro-root.ntm-shell--reduced-motion .ntm-panel {
+            backdrop-filter: none;
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.24);
+            transition: none !important;
+        }
+
+        #nai-tag-maestro-root.ntm-shell--reduced-motion .ntm-glow {
+            display: none;
+        }
+
+        #nai-tag-maestro-root.ntm-shell--reduced-motion * {
+            animation: none !important;
+            transition: none !important;
         }
 
         .ntm-glow {
