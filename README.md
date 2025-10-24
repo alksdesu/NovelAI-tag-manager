@@ -1,0 +1,2 @@
+# NovelAI-tag-manager
+
