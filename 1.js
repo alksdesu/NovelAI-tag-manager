@@ -28,6 +28,7 @@
     const STORAGE_NAMESPACE = 'novelai-tag-maestro';
     const STORAGE_VERSION = '1.0.0';
     const STORAGE_KEY = `${STORAGE_NAMESPACE}::state::${STORAGE_VERSION}`;
+    const STORAGE_SAVE_DEBOUNCE_MS = 120;
     const TRANSLATION_CACHE_KEY = `${STORAGE_NAMESPACE}::translations`;
     const POSITION_KEY = `${STORAGE_NAMESPACE}::position`;
     const CLOUD_INDEX_URL = '';
@@ -875,6 +876,8 @@
         ],
     });
 
+    let lastSavedStateSignature = '';
+
     const state = {
         data: loadData(),
         translations: loadTranslations(),
@@ -986,6 +989,12 @@
         },
     };
 
+    try {
+        lastSavedStateSignature = JSON.stringify(state.data);
+    } catch (error) {
+        lastSavedStateSignature = '';
+    }
+
     const autocompleteState = {
         ready: false,
         input: null,
@@ -1035,6 +1044,9 @@
     let scheduledRenderHandle = null;
     let scheduledRenderHandleType = null;
 
+    let scheduledSaveHandle = null;
+    let scheduledSaveHandleType = null;
+
     function cancelScheduledRender() {
         if (scheduledRenderHandle === null) {
             return;
@@ -1063,6 +1075,51 @@
         } else {
             scheduledRenderHandleType = 'timeout';
             scheduledRenderHandle = setTimeout(invoke, 16);
+        }
+    }
+
+    function cancelScheduledDataSave() {
+        if (scheduledSaveHandle === null) {
+            return;
+        }
+        if (scheduledSaveHandleType === 'idle' && typeof cancelIdleCallback === 'function') {
+            cancelIdleCallback(scheduledSaveHandle);
+        } else if (scheduledSaveHandleType === 'timeout') {
+            clearTimeout(scheduledSaveHandle);
+        }
+        scheduledSaveHandle = null;
+        scheduledSaveHandleType = null;
+    }
+
+    function flushDataSave() {
+        cancelScheduledDataSave();
+        try {
+            const serialized = JSON.stringify(state.data);
+            if (serialized === lastSavedStateSignature) {
+                return;
+            }
+            localStorage.setItem(STORAGE_KEY, serialized);
+            lastSavedStateSignature = serialized;
+        } catch (error) {
+            console.warn('Failed to persist tag maestro data.', error);
+        }
+    }
+
+    function scheduleDataSave() {
+        if (scheduledSaveHandle !== null) {
+            return;
+        }
+        const persist = () => {
+            scheduledSaveHandle = null;
+            scheduledSaveHandleType = null;
+            flushDataSave();
+        };
+        if (typeof requestIdleCallback === 'function') {
+            scheduledSaveHandleType = 'idle';
+            scheduledSaveHandle = requestIdleCallback(persist, { timeout: STORAGE_SAVE_DEBOUNCE_MS * 4 });
+        } else {
+            scheduledSaveHandleType = 'timeout';
+            scheduledSaveHandle = window.setTimeout(persist, STORAGE_SAVE_DEBOUNCE_MS);
         }
     }
 
@@ -1109,6 +1166,14 @@
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
         init();
     }
+
+    window.addEventListener('pagehide', () => saveData({ immediate: true }));
+    window.addEventListener('beforeunload', () => saveData({ immediate: true }));
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+            saveData({ immediate: true });
+        }
+    });
 
     function init() {
         if (document.getElementById(root.id)) {
@@ -7470,8 +7535,13 @@
         }
     }
 
-    function saveData() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
+    function saveData(options = {}) {
+        const immediate = Boolean(options?.immediate);
+        if (immediate) {
+            flushDataSave();
+            return;
+        }
+        scheduleDataSave();
     }
 
     function loadTranslations() {
