@@ -3619,9 +3619,11 @@
             showToast('Assistant replied.', 'success');
         } catch (error) {
             console.error('Assistant request failed', error);
-            userMessage.metadata.status = 'error';
-            userMessage.metadata.error = error?.message || 'Request failed.';
-            state.assistant.error = userMessage.metadata.error;
+            if (userMessage.metadata.status !== 'cancelled') {
+                userMessage.metadata.status = 'error';
+                userMessage.metadata.error = error?.message || 'Request failed.';
+                state.assistant.error = userMessage.metadata.error;
+            }
             saveData();
         } finally {
             state.assistant.pendingMessageId = null;
@@ -3648,8 +3650,26 @@
                 console.warn('Abort failed', error);
             }
         }
+        const pendingMessageId = state.assistant.pendingMessageId;
         state.assistant.abortController = null;
         state.assistant.sending = false;
+        state.assistant.pendingMessageId = null;
+        if (pendingMessageId) {
+            const conversation = getActiveAssistantConversation();
+            if (conversation && Array.isArray(conversation.messages)) {
+                const pendingMessage = conversation.messages.find(msg => msg.id === pendingMessageId);
+                if (pendingMessage) {
+                    const metadata = { ...(pendingMessage.metadata || {}) };
+                    metadata.status = 'cancelled';
+                    metadata.error = '';
+                    pendingMessage.metadata = metadata;
+                    pendingMessage.updatedAt = Date.now();
+                }
+            }
+            state.assistant.error = '';
+            saveData();
+            showToast('Request cancelled.', 'info');
+        }
         scheduleRender();
     }
 
