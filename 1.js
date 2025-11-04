@@ -1025,6 +1025,9 @@
         suppressNextInput: false,
         bindingScheduled: false,
         cachedPromptInput: null,
+        compositionStartHandler: null,
+        compositionEndHandler: null,
+        isComposing: false,
     };
 
     let actionListenerBound = false;
@@ -8370,14 +8373,25 @@
                 hideAutocompleteDropdown();
             }, 120);
         };
+        const handleCompositionStart = () => {
+            autocompleteState.isComposing = true;
+        };
+        const handleCompositionEnd = event => {
+            autocompleteState.isComposing = false;
+            handlePromptInput(event);
+        };
 
         input.addEventListener('input', handleInput);
         input.addEventListener('keydown', handleKeydown);
         input.addEventListener('blur', handleBlur);
+        input.addEventListener('compositionstart', handleCompositionStart);
+        input.addEventListener('compositionend', handleCompositionEnd);
 
         autocompleteState.inputHandler = handleInput;
         autocompleteState.keyHandler = handleKeydown;
         autocompleteState.blurHandler = handleBlur;
+        autocompleteState.compositionStartHandler = handleCompositionStart;
+        autocompleteState.compositionEndHandler = handleCompositionEnd;
 
         if (autocompleteState.repositionHandler) {
             window.removeEventListener('resize', autocompleteState.repositionHandler);
@@ -8412,12 +8426,21 @@
         if (autocompleteState.blurHandler) {
             input.removeEventListener('blur', autocompleteState.blurHandler);
         }
+        if (autocompleteState.compositionStartHandler) {
+            input.removeEventListener('compositionstart', autocompleteState.compositionStartHandler);
+        }
+        if (autocompleteState.compositionEndHandler) {
+            input.removeEventListener('compositionend', autocompleteState.compositionEndHandler);
+        }
         autocompleteState.inputHandler = null;
         autocompleteState.keyHandler = null;
         autocompleteState.blurHandler = null;
+        autocompleteState.compositionStartHandler = null;
+        autocompleteState.compositionEndHandler = null;
         autocompleteState.input = null;
         autocompleteState.context = 'prompt';
         autocompleteState.lastFragment = null;
+        autocompleteState.isComposing = false;
         delete input.dataset.ntmAutocompleteContext;
         delete input.dataset.ntmAutocompleteBound;
     }
@@ -8463,6 +8486,9 @@
         autocompleteState.lastFragment = fragmentInfo;
         const fragment = fragmentInfo.fragment;
         if (!fragment) {
+            if (autocompleteState.isComposing || event.isComposing) {
+                return;
+            }
             autocompleteState.currentQuery = '';
             autocompleteState.remoteHits = [];
             autocompleteState.remoteQuery = '';
@@ -8532,23 +8558,42 @@
                 selectionStart,
                 selectionEnd,
                 value,
+                prefix: '',
+                leadingWhitespace: '',
+                separator: '',
             };
         }
         const raw = ('value' in input ? input.value : input.textContent) || '';
         const caretStart = selectionStart;
         const before = raw.slice(0, caretStart);
         const after = raw.slice(selectionEnd);
-        const parts = before.split(',');
-        const lastIndex = parts.length - 1;
-        const fragment = (parts[lastIndex] || '').trimStart();
+        const separators = [',', ';', '\n', '|'];
+        let lastIndex = -1;
+        let separator = '';
+        for (const candidate of separators) {
+            const idx = before.lastIndexOf(candidate);
+            if (idx > lastIndex) {
+                lastIndex = idx;
+                separator = candidate;
+            }
+        }
+        const segmentStart = lastIndex + 1;
+        const segmentRaw = before.slice(segmentStart);
+        const fragment = segmentRaw.trimStart();
+        const leadingWhitespaceLength = segmentRaw.length - fragment.length;
+        const leadingWhitespace = segmentRaw.slice(0, leadingWhitespaceLength);
+        const prefix = before.slice(0, segmentStart);
         return {
             fragment,
-            parts,
+            parts: null,
             context,
             remainder: after,
             selectionStart,
             selectionEnd,
             value: raw,
+            prefix,
+            leadingWhitespace,
+            separator,
         };
     }
 
@@ -8694,21 +8739,23 @@
             hideAutocompleteDropdown();
             return;
         }
-        const parts = Array.isArray(fragmentInfo.parts) ? fragmentInfo.parts.slice() : [''];
-        if (!parts.length) {
-            parts.push(` ${text}`);
-        } else {
-            parts[parts.length - 1] = ` ${text}`;
-        }
-        const assembled = parts.map(segment => segment.trim()).filter(Boolean).join(', ');
+        const prefixBase = fragmentInfo.prefix || '';
+        const leadingWhitespace = fragmentInfo.leadingWhitespace || '';
         const remainder = fragmentInfo.remainder || '';
-        const normalized = assembled || text;
-        let finalText = `${normalized}, `;
+        const trimmedText = text.trim();
+        const needsSpace = !leadingWhitespace && prefixBase && !/[\s|\n]$/.test(prefixBase);
+        const normalizedPrefix = `${prefixBase}${leadingWhitespace || (needsSpace ? ' ' : '')}`;
+        const normalized = `${normalizedPrefix}${trimmedText}`;
+        let finalText;
         if (remainder && remainder.trim().length) {
-            const prefix = remainder.trimStart().startsWith(',') || remainder.startsWith(',')
-                ? ''
-                : ', ';
-            finalText = `${normalized}${prefix}${remainder.trimStart()}`;
+            if (/^[\s]*[,;|\n]/.test(remainder)) {
+                finalText = `${normalized}${remainder}`;
+            } else {
+                const trimmedRemainder = remainder.trimStart();
+                finalText = `${normalized}, ${trimmedRemainder}`;
+            }
+        } else {
+            finalText = `${normalized}, `;
         }
         if ('value' in target) {
             target.value = finalText;
