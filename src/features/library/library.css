@@ -288,10 +288,37 @@
   outline-offset: 2px;
   border-radius: var(--ntm-radius-md);
 }
+.ntm-tag-card-drag-wrap .ntm-tag-card {
+  flex: 1;
+  min-width: 0;
+}
 .ntm-tag-card__checkbox {
-  margin-top: 12px;
-  accent-color: var(--ntm-accent);
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 3px;
+  border: 1.5px solid var(--ntm-border-active);
+  background: var(--ntm-bg-base);
   flex-shrink: 0;
+  margin-top: 0.5rem;
+  cursor: pointer;
+  transition: background 80ms ease, border-color 80ms ease;
+}
+.ntm-tag-card__checkbox svg {
+  width: 0.8em;
+  height: 0.8em;
+  stroke-width: 3;
+}
+.ntm-tag-card__checkbox--checked {
+  background: var(--ntm-accent);
+  border-color: var(--ntm-accent);
+  color: #fff;
+}
+.ntm-tag-card__checkbox:hover {
+  border-color: var(--ntm-accent);
 }
 
 /* ─── Batch bar ─── */

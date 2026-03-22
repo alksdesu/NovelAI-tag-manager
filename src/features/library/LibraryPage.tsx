@@ -33,6 +33,7 @@ import {
 } from './useLibrary';
 import { TAGS_PER_PAGE } from '../../constants';
 import { For, createSignal } from 'solid-js';
+import { IconCheck } from '../../components/Icons';
 
 export function LibraryPage() {
   const t = useLocale();
@@ -135,13 +136,16 @@ export function LibraryPage() {
                 onClick={() => batchMode() && toggleTagSelection(tag.id)}
               >
                 <Show when={batchMode()}>
-                  <input
-                    type="checkbox"
-                    class="ntm-tag-card__checkbox"
-                    checked={isTagSelected(tag.id)}
-                    onClick={(e) => e.stopPropagation()}
-                    onChange={() => toggleTagSelection(tag.id)}
-                  />
+                  <button
+                    class={`ntm-tag-card__checkbox ${isTagSelected(tag.id) ? 'ntm-tag-card__checkbox--checked' : ''}`}
+                    onClick={(e) => { e.stopPropagation(); toggleTagSelection(tag.id); }}
+                    aria-checked={isTagSelected(tag.id)}
+                    role="checkbox"
+                  >
+                    <Show when={isTagSelected(tag.id)}>
+                      <IconCheck />
+                    </Show>
+                  </button>
                 </Show>
                 <TagCard tag={tag} category={activeCategory()!} />
               </div>

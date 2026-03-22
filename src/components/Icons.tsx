@@ -25,6 +25,8 @@ export const IconPalette = () => <svg {...s}><circle cx="13.5" cy="6.5" r="0.5" 
 export const IconUser = () => <svg {...s}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
 export const IconBot = () => <svg {...s}><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>;
 
+export const IconCheck = () => <svg {...s}><path d="M20 6 9 17l-5-5"/></svg>;
+
 // ─── Nav icons ───
 export const IconLibrary = () => <svg {...s}><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19v20H6.5a2.5 2.5 0 0 1 0-5H19"/></svg>;
 export const IconSearch = () => <svg {...s}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>;
