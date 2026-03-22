@@ -1,0 +1,295 @@
+/* ─── Danbooru section ─── */
+.ntm-danbooru {
+  background: var(--ntm-bg-card);
+  border: 1px solid var(--ntm-border);
+  border-radius: var(--ntm-radius-lg);
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  min-height: 0;
+  min-width: 0;
+}
+
+.ntm-danbooru__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+.ntm-danbooru__header h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ntm-text-bright);
+}
+.ntm-danbooru__header p {
+  margin: 0.15rem 0 0;
+  font-size: 0.75rem;
+  color: var(--ntm-muted);
+}
+
+.ntm-danbooru__controls {
+  display: grid;
+  gap: 0.4rem;
+}
+.ntm-danbooru__search-row {
+  display: flex;
+  gap: 0.4rem;
+}
+.ntm-danbooru__search-row .ntm-input {
+  flex: 1;
+}
+.ntm-danbooru__filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+.ntm-danbooru__filter-row .ntm-input--select {
+  flex: 1 1 110px;
+  min-width: 95px;
+}
+
+.ntm-danbooru-note {
+  font-size: 0.7rem;
+  color: var(--ntm-text-dim);
+}
+.ntm-danbooru-note--warn {
+  color: var(--ntm-warning);
+}
+
+/* ─── Gallery grid ─── */
+.ntm-danbooru__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.5rem;
+  width: 100%;
+}
+
+/* ─── Danbooru card ─── */
+.ntm-danbooru-card {
+  background: var(--ntm-bg-elevated);
+  border-radius: var(--ntm-radius-md);
+  border: 1px solid var(--ntm-border);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  transition: border-color 100ms ease;
+}
+.ntm-danbooru-card:hover {
+  border-color: rgba(var(--ntm-accent-rgb), 0.25);
+}
+
+.ntm-danbooru-thumb {
+  position: relative;
+  display: block;
+  background-color: var(--ntm-bg-base);
+  cursor: pointer;
+  overflow: hidden;
+}
+.ntm-danbooru-thumb__image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.ntm-danbooru-thumb__placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 140px;
+  color: var(--ntm-muted);
+  font-size: 0.72rem;
+  text-align: center;
+  padding: 0.4rem;
+}
+
+.ntm-danbooru-view {
+  position: absolute;
+  inset: auto 0 0;
+  margin: 0.4rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--ntm-radius-sm);
+  background: var(--ntm-bg-panel);
+  border: 1px solid var(--ntm-border);
+  color: var(--ntm-text);
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: background 80ms ease, border-color 80ms ease, transform 80ms ease;
+}
+.ntm-danbooru-view:hover {
+  background: var(--ntm-bg-hover);
+  border-color: rgba(var(--ntm-accent-rgb), 0.3);
+}
+.ntm-danbooru-view:active {
+  transform: scale(0.95);
+}
+
+.ntm-danbooru-content {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.5rem;
+  flex: 1 1 auto;
+}
+
+.ntm-danbooru-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ntm-text-bright);
+}
+
+.ntm-danbooru-meta {
+  display: flex;
+  gap: 0.4rem;
+  font-size: 0.68rem;
+  color: var(--ntm-text-dim);
+}
+
+.ntm-danbooru-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+.ntm-danbooru-tags--wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.ntm-danbooru-tag {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 0.25rem 0.4rem;
+  border-radius: 4px;
+  background: var(--ntm-bg-card);
+  border: 1px solid var(--ntm-border-subtle);
+  font-family: var(--ntm-font-mono);
+}
+.ntm-danbooru-tag--interactive {
+  cursor: pointer;
+  user-select: none;
+  transition: background 80ms ease, border-color 80ms ease;
+}
+.ntm-danbooru-tag--interactive:hover,
+.ntm-danbooru-tag--interactive:focus {
+  background: var(--ntm-bg-hover);
+  border-color: rgba(var(--ntm-teal-rgb), 0.3);
+  outline: none;
+}
+.ntm-danbooru-tag strong {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--ntm-text);
+}
+.ntm-danbooru-tag small {
+  font-size: 0.62rem;
+  color: var(--ntm-muted);
+}
+
+.ntm-danbooru-transfer {
+  display: grid;
+  gap: 0.35rem;
+}
+.ntm-danbooru-transfer__label {
+  font-size: 0.7rem;
+  color: var(--ntm-text-dim);
+}
+.ntm-danbooru-transfer__select {
+  width: 100%;
+  padding: 0.3rem 0.45rem;
+  background: var(--ntm-bg-input);
+  border: 1px solid var(--ntm-border);
+  border-radius: var(--ntm-radius-sm);
+  color: inherit;
+  font-size: 0.78rem;
+}
+.ntm-danbooru-transfer__select:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.ntm-danbooru-transfer .ntm-mini-btn {
+  justify-self: start;
+}
+
+.ntm-danbooru-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: auto;
+}
+
+.ntm-danbooru-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--ntm-text-dim);
+}
+
+.ntm-danbooru.is-loading .ntm-danbooru__grid {
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── Danbooru viewer (two-column) ─── */
+.ntm-danbooru-viewer__panel {
+  max-width: min(900px, 92vw);
+}
+
+.ntm-danbooru-viewer__body {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+}
+
+.ntm-danbooru-viewer__image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ntm-bg-base);
+  border-radius: var(--ntm-radius-md);
+  padding: 0.5rem;
+  border: 1px solid var(--ntm-border-subtle);
+}
+.ntm-danbooru-viewer__image img {
+  max-width: 100%;
+  max-height: 70vh;
+  border-radius: var(--ntm-radius-sm);
+  object-fit: contain;
+}
+
+.ntm-danbooru-viewer__placeholder {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--ntm-muted);
+  font-size: 0.85rem;
+}
+
+.ntm-danbooru-viewer__aside {
+  display: grid;
+  gap: 0.5rem;
+  align-content: start;
+}
+.ntm-danbooru-viewer__aside h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ntm-text-bright);
+}
+
+.ntm-danbooru-viewer__footer {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}

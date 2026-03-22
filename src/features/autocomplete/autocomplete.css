@@ -1,0 +1,61 @@
+/* ─── Autocomplete dropdown ─── */
+.ntm-ac-dropdown {
+  position: absolute;
+  overflow-y: auto;
+  max-height: 36vh;
+  background: var(--ntm-bg-panel);
+  border: 1px solid var(--ntm-border);
+  border-radius: var(--ntm-radius-md);
+  padding: 4px;
+  box-shadow: var(--ntm-shadow-lg);
+  z-index: var(--ntm-z-autocomplete);
+}
+
+.ntm-ac-dropdown[data-position="above"] {
+  transform-origin: bottom center;
+}
+
+.ntm-ac-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.4rem 0.55rem;
+  border-radius: var(--ntm-radius-sm);
+  cursor: pointer;
+  transition: background 60ms ease;
+}
+
+.ntm-ac-item:hover,
+.ntm-ac-item.is-active {
+  background: var(--ntm-bg-hover);
+}
+
+.ntm-ac-text {
+  font-size: 0.82rem;
+  color: var(--ntm-text);
+  font-family: var(--ntm-font-mono);
+  font-size: 0.78rem;
+}
+
+.ntm-ac-src {
+  font-size: 0.68rem;
+  color: var(--ntm-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.ntm-ac-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 0.5rem;
+}
+
+.ntm-ac-translation {
+  font-size: 0.72rem;
+  color: var(--ntm-muted);
+  width: 100%;
+  text-align: left;
+}

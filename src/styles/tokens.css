@@ -1,0 +1,77 @@
+:root {
+  /* ─── Panel ─── */
+  --ntm-panel-default-width: min(560px, 92vw);
+  --ntm-panel-default-height: min(82vh, 940px);
+
+  /* ─── Backgrounds: charcoal-navy, solid tones ─── */
+  --ntm-bg-base: #0d1117;
+  --ntm-bg-panel: #151b28;
+  --ntm-bg-card: #1a2233;
+  --ntm-bg-elevated: #212d42;
+  --ntm-bg-input: #111822;
+  --ntm-bg-hover: #253248;
+
+  /* ─── Accent: warm copper-amber ─── */
+  --ntm-accent: #c8956c;
+  --ntm-accent-rgb: 200, 149, 108;
+  --ntm-accent-dim: #a07850;
+  --ntm-accent-bright: #ddb08a;
+
+  /* ─── Secondary: muted teal ─── */
+  --ntm-teal: #5ab8a6;
+  --ntm-teal-rgb: 90, 184, 166;
+
+  /* ─── Tertiary ─── */
+  --ntm-slate: #64748b;
+  --ntm-slate-rgb: 100, 116, 139;
+
+  /* ─── Text ─── */
+  --ntm-text: #c9d1dc;
+  --ntm-text-bright: #e8ecf2;
+  --ntm-text-dim: #8896a8;
+  --ntm-muted: #5e6d80;
+
+  /* ─── Functional ─── */
+  --ntm-success: #4aad8b;
+  --ntm-success-rgb: 74, 173, 139;
+  --ntm-error: #d4574e;
+  --ntm-error-rgb: 212, 87, 78;
+  --ntm-warning: #d4a33e;
+  --ntm-warning-rgb: 212, 163, 62;
+
+  /* ─── Borders: visible but understated ─── */
+  --ntm-border: #232f40;
+  --ntm-border-subtle: #1e2a3a;
+  --ntm-border-active: rgba(var(--ntm-accent-rgb), 0.45);
+
+  /* ─── Radius: 3-tier system ─── */
+  --ntm-radius-sm: 6px;
+  --ntm-radius-md: 10px;
+  --ntm-radius-lg: 14px;
+  --ntm-radius-xl: 18px;
+
+  /* ─── Shadow ─── */
+  --ntm-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --ntm-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --ntm-shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.45);
+
+  /* ─── Typography ─── */
+  --ntm-font-body: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
+  --ntm-font-mono: 'JetBrains Mono', 'Consolas', monospace;
+
+  /* ─── Spacing scale ─── */
+  --ntm-sp-1: 4px;
+  --ntm-sp-2: 8px;
+  --ntm-sp-3: 12px;
+  --ntm-sp-4: 16px;
+  --ntm-sp-5: 20px;
+  --ntm-sp-6: 24px;
+  --ntm-sp-8: 32px;
+
+  /* ─── Z-index ─── */
+  --ntm-z-panel: 999999;
+  --ntm-z-modal: 1000000;
+  --ntm-z-toast: 1000001;
+  --ntm-z-context: 1000002;
+  --ntm-z-autocomplete: 1000003;
+}

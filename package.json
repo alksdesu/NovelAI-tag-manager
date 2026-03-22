@@ -1,0 +1,32 @@
+{
+  "name": "novelai-tag-maestro",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Premium tag management for NovelAI image generation",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Alks0/NovelAI-tag-manager.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Alks0/NovelAI-tag-manager/issues"
+  },
+  "homepage": "https://github.com/Alks0/NovelAI-tag-manager#readme",
+  "dependencies": {
+    "solid-js": "^1.9.11"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "vite-plugin-monkey": "^7.1.9",
+    "vite-plugin-solid": "^2.11.11"
+  }
+}

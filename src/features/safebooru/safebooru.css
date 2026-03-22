@@ -1,0 +1,93 @@
+/* ─── Safebooru section ─── */
+.ntm-safebooru {
+  background: var(--ntm-bg-card);
+  border-radius: var(--ntm-radius-lg);
+  padding: 0.85rem;
+  border: 1px solid var(--ntm-border);
+  display: grid;
+  gap: 0.6rem;
+  min-height: 0;
+}
+
+.ntm-safebooru header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.ntm-safebooru__search {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.ntm-safebooru__results {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  min-height: 2rem;
+}
+
+/* ─── Safebooru chip ─── */
+.ntm-safebooru-chip-wrap {
+  display: flex;
+  gap: 2px;
+  align-items: stretch;
+}
+.ntm-safebooru-chip__save {
+  font-size: 0.68rem;
+  width: 1.3rem;
+  height: auto;
+  border-radius: 0 var(--ntm-radius-sm) var(--ntm-radius-sm) 0;
+  opacity: 0;
+  background: var(--ntm-bg-elevated);
+  border: 1px solid var(--ntm-border);
+  border-left: none;
+  transition: opacity 80ms ease;
+}
+.ntm-safebooru-chip-wrap:hover .ntm-safebooru-chip__save {
+  opacity: 0.7;
+}
+.ntm-safebooru-chip__save:hover {
+  opacity: 1 !important;
+  background: var(--ntm-bg-hover);
+}
+
+.ntm-safebooru-chip {
+  border: 1px solid var(--ntm-border);
+  padding: 0.4rem 0.65rem;
+  border-radius: var(--ntm-radius-sm);
+  background: var(--ntm-bg-elevated);
+  color: var(--ntm-text);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: border-color 80ms ease, background 80ms ease, transform 80ms ease;
+}
+.ntm-safebooru-chip:hover {
+  background: var(--ntm-bg-hover);
+  border-color: rgba(var(--ntm-teal-rgb), 0.3);
+}
+.ntm-safebooru-chip:active {
+  transform: scale(0.96);
+}
+
+.ntm-safebooru-chip small {
+  font-size: 0.65rem;
+  color: var(--ntm-muted);
+}
+
+.ntm-safebooru-chip__translation {
+  color: var(--ntm-accent);
+  font-size: 0.68rem;
+}
+.ntm-safebooru-chip__translation--missing {
+  color: var(--ntm-muted);
+  font-style: italic;
+}
+.ntm-safebooru-chip__meta {
+  color: var(--ntm-text-dim);
+  font-size: 0.65rem;
+}

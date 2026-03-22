@@ -1,0 +1,94 @@
+/* ─── Compact: panel <= 760px ─── */
+#nai-tag-maestro-root.ntm-shell--compact .ntm-assistant__sidebar {
+  flex-basis: clamp(190px, 36%, 300px);
+}
+
+/* ─── Narrow: panel <= 560px ─── */
+#nai-tag-maestro-root.ntm-shell--narrow .ntm-assistant {
+  flex-direction: column;
+}
+#nai-tag-maestro-root.ntm-shell--narrow .ntm-assistant__sidebar,
+#nai-tag-maestro-root.ntm-shell--narrow .ntm-assistant__main {
+  width: 100%;
+}
+#nai-tag-maestro-root.ntm-shell--narrow .ntm-assistant__sidebar {
+  flex: 0 0 auto;
+  max-height: min(340px, 45vh);
+}
+#nai-tag-maestro-root.ntm-shell--narrow .ntm-assistant__main {
+  flex: 1 1 auto;
+}
+#nai-tag-maestro-root.ntm-shell--narrow .ntm-assistant__conversation-list {
+  max-height: min(260px, 40vh);
+}
+
+/* ─── Tiny: panel <= 420px ─── */
+#nai-tag-maestro-root.ntm-shell--tiny .ntm-assistant {
+  gap: 0.75rem;
+}
+
+/* ─── Mobile: viewport ─── */
+@media (max-width: 780px) {
+  #nai-tag-maestro-root {
+    width: 92vw;
+    left: 50% !important;
+    transform: translateX(-50%);
+    right: auto;
+    bottom: 1.5rem;
+  }
+
+  .ntm-panel {
+    padding: 0.85rem;
+  }
+
+  #nai-tag-maestro-root.ntm-shell--tiny .ntm-panel {
+    padding: 0.7rem 0.7rem 1rem;
+  }
+
+  .ntm-tabs,
+  .ntm-quick-actions,
+  .ntm-safebooru__search {
+    justify-content: center;
+  }
+
+  .ntm-tag-list {
+    max-height: none;
+  }
+
+  .ntm-danbooru__grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
+
+  .ntm-danbooru-viewer__body {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 960px) {
+  .ntm-assistant {
+    flex-direction: column;
+  }
+  .ntm-assistant__sidebar,
+  .ntm-assistant__main {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .ntm-assistant__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .ntm-assistant__composer-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.6rem;
+  }
+  .ntm-assistant__composer-left,
+  .ntm-assistant__composer-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

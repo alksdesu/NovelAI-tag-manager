@@ -1,0 +1,634 @@
+/* ─── Library layout ─── */
+.ntm-library {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  min-height: 0;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/* ─── Category tabs ─── */
+.ntm-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.ntm-tab {
+  position: relative;
+  border: 1px solid var(--ntm-border);
+  padding: 0.5rem 0.85rem;
+  border-radius: var(--ntm-radius-sm);
+  background: var(--ntm-bg-card);
+  color: var(--ntm-text-dim);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease, transform 80ms ease;
+}
+.ntm-tab:hover {
+  background: var(--ntm-bg-elevated);
+  color: var(--ntm-text);
+  border-color: rgba(var(--ntm-accent-rgb), 0.15);
+}
+.ntm-tab:active {
+  transform: scale(0.96);
+}
+
+.ntm-tab.active {
+  background: rgba(var(--ntm-accent-rgb), 0.12);
+  border-color: rgba(var(--ntm-accent-rgb), 0.35);
+  color: var(--ntm-accent-bright);
+}
+
+.ntm-tab .ntm-tab-count {
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  background: var(--ntm-bg-base);
+  font-size: 0.68rem;
+  color: var(--ntm-text-dim);
+  font-weight: 500;
+}
+
+/* ─── Context menu ─── */
+#ntm-context-menu {
+  position: fixed;
+  z-index: var(--ntm-z-autocomplete);
+  background: var(--ntm-bg-panel);
+  border: 1px solid var(--ntm-border);
+  border-radius: var(--ntm-radius-md);
+  min-width: 160px;
+  box-shadow: var(--ntm-shadow-lg);
+  padding: 4px;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 100ms ease, transform 100ms ease;
+}
+#ntm-context-menu.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.ntm-context-menu__item {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 0.4rem 0.7rem;
+  color: var(--ntm-text);
+  font-size: 0.78rem;
+  cursor: pointer;
+  border-radius: var(--ntm-radius-sm);
+  transition: background 80ms ease;
+}
+.ntm-context-menu__item:hover,
+.ntm-context-menu__item:focus {
+  background: var(--ntm-bg-hover);
+  outline: none;
+}
+.ntm-context-menu__item.is-danger {
+  color: var(--ntm-error);
+}
+.ntm-context-menu__item.is-danger:hover,
+.ntm-context-menu__item.is-danger:focus {
+  background: rgba(var(--ntm-error-rgb), 0.12);
+}
+
+/* ─── Controls ─── */
+.ntm-controls {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.ntm-search__group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.ntm-search__input-wrap {
+  position: relative;
+  flex: 1 1 200px;
+  display: flex;
+}
+.ntm-search__input-wrap > .ntm-input {
+  flex: 1;
+  padding-right: 1.8rem;
+}
+.ntm-search__clear {
+  position: absolute;
+  right: 0.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: none;
+  color: var(--ntm-muted);
+  cursor: pointer;
+  font-size: 0.72rem;
+  padding: 0.15rem;
+  line-height: 1;
+  transition: color 80ms ease;
+}
+.ntm-search__clear:hover {
+  color: var(--ntm-text);
+}
+.ntm-search__mode {
+  flex: 0 0 140px;
+  min-width: 130px;
+}
+
+.ntm-quick-actions {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+/* ─── Input ─── */
+.ntm-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--ntm-radius-sm);
+  border: 1px solid var(--ntm-border);
+  background: var(--ntm-bg-input);
+  color: var(--ntm-text);
+  font-size: 0.82rem;
+  font-family: var(--ntm-font-body);
+  outline: none;
+  transition: border-color 120ms ease;
+}
+.ntm-input:focus {
+  border-color: rgba(var(--ntm-accent-rgb), 0.5);
+}
+.ntm-input--textarea {
+  resize: vertical;
+  min-height: 56px;
+}
+.ntm-input--select {
+  padding-right: 2rem;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235e6d80' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+}
+
+/* ─── Button ─── */
+.ntm-btn {
+  border: 1px solid rgba(var(--ntm-accent-rgb), 0.4);
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--ntm-radius-sm);
+  background: rgba(var(--ntm-accent-rgb), 0.18);
+  color: var(--ntm-accent-bright);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background 100ms ease, border-color 100ms ease, transform 80ms ease, box-shadow 100ms ease;
+}
+.ntm-btn:hover {
+  background: rgba(var(--ntm-accent-rgb), 0.28);
+  border-color: rgba(var(--ntm-accent-rgb), 0.55);
+  box-shadow: 0 0 0 1px rgba(var(--ntm-accent-rgb), 0.12);
+}
+.ntm-btn:active {
+  background: rgba(var(--ntm-accent-rgb), 0.35);
+  transform: scale(0.97);
+}
+.ntm-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.ntm-btn--ghost {
+  background: var(--ntm-bg-elevated);
+  border-color: var(--ntm-border);
+  color: var(--ntm-text);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+}
+.ntm-btn--ghost:hover {
+  background: var(--ntm-bg-hover);
+  border-color: rgba(var(--ntm-accent-rgb), 0.3);
+  color: var(--ntm-text-bright);
+}
+.ntm-btn--ghost:active {
+  background: var(--ntm-bg-card);
+  transform: scale(0.97);
+}
+.ntm-btn--danger {
+  background: rgba(var(--ntm-error-rgb), 0.15);
+  border-color: rgba(var(--ntm-error-rgb), 0.4);
+  color: #f0a0a0;
+}
+.ntm-btn--danger:hover {
+  background: rgba(var(--ntm-error-rgb), 0.25);
+  border-color: rgba(var(--ntm-error-rgb), 0.55);
+}
+.ntm-btn--danger:active {
+  background: rgba(var(--ntm-error-rgb), 0.32);
+  transform: scale(0.97);
+}
+
+/* ─── Mini button ─── */
+.ntm-mini-btn {
+  border: 1px solid var(--ntm-border);
+  background: var(--ntm-bg-elevated);
+  color: var(--ntm-text-dim);
+  padding: 0.35rem 0.55rem;
+  border-radius: var(--ntm-radius-sm);
+  cursor: pointer;
+  font-size: 0.72rem;
+  transition: background 100ms ease, color 100ms ease, border-color 100ms ease, transform 80ms ease;
+}
+.ntm-mini-btn:hover {
+  background: var(--ntm-bg-hover);
+  color: var(--ntm-text);
+  border-color: rgba(var(--ntm-accent-rgb), 0.2);
+}
+.ntm-mini-btn:active {
+  transform: scale(0.95);
+  background: var(--ntm-bg-card);
+}
+.ntm-mini-btn.is-active {
+  background: rgba(var(--ntm-accent-rgb), 0.18);
+  border-color: rgba(var(--ntm-accent-rgb), 0.4);
+  color: var(--ntm-accent-bright);
+}
+
+/* ─── Tag card ─── */
+.ntm-tag-card {
+  background: var(--ntm-bg-card);
+  border-radius: var(--ntm-radius-md);
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--ntm-border);
+  cursor: grab;
+  transition: border-color 100ms ease;
+}
+.ntm-tag-card:active {
+  cursor: grabbing;
+}
+.ntm-tag-card:hover {
+  border-color: rgba(var(--ntm-accent-rgb), 0.25);
+}
+
+/* ─── Drag wrapper ─── */
+.ntm-tag-card-drag-wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+.ntm-tag-card-drag-wrap[draggable="true"] { cursor: grab; }
+.ntm-tag-card-drag-wrap[draggable="true"]:active { cursor: grabbing; }
+.ntm-tag-card-drag-wrap--dragging { opacity: 0.35; }
+.ntm-tag-card-drag-wrap--selected {
+  outline: 2px solid rgba(var(--ntm-accent-rgb), 0.5);
+  outline-offset: 2px;
+  border-radius: var(--ntm-radius-md);
+}
+.ntm-tag-card__checkbox {
+  margin-top: 12px;
+  accent-color: var(--ntm-accent);
+  flex-shrink: 0;
+}
+
+/* ─── Batch bar ─── */
+.ntm-library__batch-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.7rem;
+  background: var(--ntm-bg-card);
+  border: 1px solid rgba(var(--ntm-accent-rgb), 0.2);
+  border-radius: var(--ntm-radius-md);
+}
+.ntm-library__batch-count {
+  font-size: 0.75rem;
+  color: var(--ntm-accent);
+  font-weight: 700;
+}
+
+.ntm-tag-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  margin-bottom: 0.2rem;
+}
+.ntm-tag-card__title {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ntm-text-bright);
+}
+.ntm-tag-card__actions {
+  display: flex;
+  gap: 0.2rem;
+}
+.ntm-tag-card__more {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 4px;
+  margin-top: 0.3rem;
+  background: var(--ntm-bg-panel);
+  border: 1px solid var(--ntm-border);
+  border-radius: var(--ntm-radius-sm);
+  box-shadow: var(--ntm-shadow-md);
+}
+.ntm-tag-card__more-item svg {
+  width: 0.85em;
+  height: 0.85em;
+  flex-shrink: 0;
+}
+.ntm-tag-card__more-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: none;
+  background: none;
+  color: var(--ntm-text);
+  padding: 0.3rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  text-align: left;
+  transition: background 80ms ease;
+}
+.ntm-tag-card__more-item:hover {
+  background: var(--ntm-bg-hover);
+}
+.ntm-tag-card__more-item--danger {
+  color: var(--ntm-error);
+}
+.ntm-tag-card__tagline {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--ntm-text);
+  line-height: 1.45;
+  font-family: var(--ntm-font-mono);
+  font-size: 0.75rem;
+}
+.ntm-tag-card__notes {
+  margin: 0.35rem 0 0;
+  font-size: 0.72rem;
+  color: var(--ntm-muted);
+  font-style: italic;
+}
+
+/* ─── Tag chip list (fragments) ─── */
+.ntm-tag-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.ntm-tag-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  background: var(--ntm-bg-elevated);
+  border: 1px solid var(--ntm-border);
+  border-radius: var(--ntm-radius-sm);
+  padding: 0.2rem 0.4rem;
+  min-width: 0;
+  cursor: pointer;
+  transition: border-color 80ms ease;
+}
+.ntm-tag-chip:hover {
+  border-color: rgba(var(--ntm-teal-rgb), 0.35);
+}
+.ntm-tag-chip--editable {
+  cursor: grab;
+}
+.ntm-tag-chip--editable:active {
+  cursor: grabbing;
+}
+.ntm-tag-chip--dragging {
+  opacity: 0.35;
+}
+.ntm-tag-chip__edit-input {
+  border: none;
+  background: var(--ntm-bg-input);
+  color: var(--ntm-text);
+  font-size: 0.75rem;
+  padding: 0.12rem 0.25rem;
+  border-radius: 3px;
+  width: 100%;
+  min-width: 55px;
+  outline: 1px solid rgba(var(--ntm-accent-rgb), 0.4);
+}
+.ntm-tag-chip__delete {
+  border: none;
+  background: none;
+  color: var(--ntm-muted);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  opacity: 0;
+  transition: opacity 80ms ease;
+}
+.ntm-tag-chip__delete svg {
+  width: 0.65em;
+  height: 0.65em;
+}
+.ntm-tag-chip:hover .ntm-tag-chip__delete {
+  opacity: 0.6;
+}
+.ntm-tag-chip__delete:hover {
+  color: var(--ntm-error);
+  opacity: 1 !important;
+}
+.ntm-tag-chip__text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+.ntm-tag-chip__english {
+  font-size: 0.75rem;
+  color: var(--ntm-text);
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.25;
+  font-family: var(--ntm-font-mono);
+  font-size: 0.72rem;
+}
+.ntm-tag-chip__translation {
+  font-size: 0.68rem;
+  color: var(--ntm-accent);
+  white-space: normal;
+  line-height: 1.2;
+}
+
+/* ─── Tag fragments panel ─── */
+.ntm-tag-fragments {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--ntm-radius-md);
+  border: 1px solid var(--ntm-border-subtle);
+  background: var(--ntm-bg-base);
+}
+.ntm-tag-fragments__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+.ntm-tag-fragments__header span {
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: var(--ntm-text-bright);
+}
+.ntm-tag-fragments__subtitle {
+  margin: 0;
+  font-size: 0.7rem;
+  color: var(--ntm-muted);
+}
+.ntm-tag-fragments__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.ntm-tag-fragments__content > .ntm-tag-chip-list {
+  width: 100%;
+}
+.ntm-tag-fragments__empty,
+.ntm-tag-fragments__disabled {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--ntm-muted);
+}
+
+/* ─── Tag list ─── */
+.ntm-tag-list {
+  display: grid;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
+/* ─── Pagination ─── */
+.ntm-library__pagination {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding-top: 0.1rem;
+}
+
+.ntm-pagination {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: var(--ntm-bg-card);
+  border: 1px solid var(--ntm-border);
+  border-radius: var(--ntm-radius-md);
+  padding: 3px;
+}
+
+.ntm-pagination__info {
+  font-size: 0.72rem;
+  color: var(--ntm-muted);
+  padding: 0 0.35rem;
+}
+
+.ntm-pagination .ntm-pill {
+  padding: 0.25rem 0.55rem;
+  font-size: 0.72rem;
+}
+.ntm-pagination__ellipsis {
+  font-size: 0.72rem;
+  color: var(--ntm-muted);
+  padding: 0 0.1rem;
+}
+
+/* ─── Modal ─── */
+.ntm-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--ntm-z-modal);
+  pointer-events: auto;
+  font-family: var(--ntm-font-body);
+  color: var(--ntm-text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.ntm-modal *, .ntm-modal *::before, .ntm-modal *::after { box-sizing: border-box; margin: 0; padding: 0; }
+.ntm-modal button { font-family: inherit; font-size: inherit; border: none; background: none; color: inherit; cursor: pointer; outline: none; }
+.ntm-modal input, .ntm-modal textarea, .ntm-modal select { font-family: inherit; font-size: inherit; color: inherit; background: none; border: none; outline: none; }
+.ntm-modal ::placeholder { color: var(--ntm-muted); opacity: 1; }
+.ntm-modal ::selection { background: rgba(var(--ntm-accent-rgb), 0.35); color: var(--ntm-text-bright); }
+
+.ntm-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  pointer-events: auto;
+}
+
+.ntm-modal__panel {
+  position: relative;
+  background: var(--ntm-bg-panel);
+  border-radius: var(--ntm-radius-xl);
+  border: 1px solid var(--ntm-border);
+  padding: 1.2rem;
+  width: var(--ntm-modal-width, min(420px, 90vw));
+  max-height: var(--ntm-modal-height, 80vh);
+  overflow-y: auto;
+  box-shadow: var(--ntm-shadow-lg);
+  display: grid;
+  gap: 0.85rem;
+  pointer-events: auto;
+  animation: ntm-modal-in 150ms ease;
+}
+.ntm-modal__panel--wide {
+  width: min(540px, 92vw);
+}
+.ntm-modal__panel--tag {
+  --ntm-modal-width: var(--ntm-tag-modal-width, min(520px, 92vw));
+  --ntm-modal-height: var(--ntm-tag-modal-height, min(75vh, 640px));
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  overflow: hidden;
+}
+.ntm-modal__panel--tag .ntm-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  gap: 0.65rem;
+}
+.ntm-modal__panel--tag footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-top: 0.3rem;
+  border-top: 1px solid var(--ntm-border-subtle);
+}
+
+.ntm-modal__body {
+  display: grid;
+  gap: 0.65rem;
+}
+.ntm-modal__body label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  color: var(--ntm-text-dim);
+  font-weight: 500;
+}
+
+.ntm-input-row {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}

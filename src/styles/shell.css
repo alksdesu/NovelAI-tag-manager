@@ -1,0 +1,486 @@
+/* ─── Root ─── */
+#nai-tag-maestro-root {
+  position: fixed;
+  right: 2rem;
+  bottom: 4rem;
+  z-index: var(--ntm-z-panel);
+  font-family: var(--ntm-font-body);
+  color: var(--ntm-text);
+  font-size: 14px;
+  line-height: 1.5;
+  width: var(--ntm-panel-width, var(--ntm-panel-default-width));
+  height: var(--ntm-panel-height, var(--ntm-panel-default-height));
+  max-height: calc(100vh - 32px);
+  max-width: calc(100vw - 32px);
+  min-width: 200px;
+  min-height: 220px;
+  display: flex;
+  pointer-events: none;
+}
+
+/* ─── Compact / Narrow / Tiny ─── */
+#nai-tag-maestro-root.ntm-shell--compact .ntm-panel {
+  padding: 0.85rem 0.85rem 1.2rem;
+}
+#nai-tag-maestro-root.ntm-shell--compact .ntm-header {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+#nai-tag-maestro-root.ntm-shell--compact .ntm-title {
+  flex: 1 1 200px;
+}
+#nai-tag-maestro-root.ntm-shell--compact .ntm-header-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+#nai-tag-maestro-root.ntm-shell--narrow .ntm-header {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+#nai-tag-maestro-root.ntm-shell--narrow .ntm-header-actions {
+  justify-content: flex-start;
+}
+
+#nai-tag-maestro-root.ntm-shell--tiny .ntm-panel {
+  padding: 0.7rem 0.7rem 1rem;
+  border-radius: var(--ntm-radius-lg);
+}
+#nai-tag-maestro-root.ntm-shell--tiny .ntm-header-actions {
+  gap: 0.25rem;
+}
+#nai-tag-maestro-root.ntm-shell--tiny .ntm-pill {
+  padding: 0.3rem 0.5rem;
+  font-size: 0.7rem;
+}
+#nai-tag-maestro-root.ntm-shell--tiny .ntm-title h1 {
+  font-size: 1rem;
+}
+#nai-tag-maestro-root.ntm-shell--tiny .ntm-page-nav {
+  gap: 0.35rem;
+}
+#nai-tag-maestro-root.ntm-shell--tiny .ntm-page-tab {
+  flex: 1 1 100%;
+  justify-content: center;
+}
+#nai-tag-maestro-root.ntm-shell--tiny .ntm-page-tab__label {
+  display: none;
+}
+#nai-tag-maestro-root.ntm-shell--tiny .ntm-page-tab {
+  flex: 1 1 auto;
+  padding: 0.45rem 0.65rem;
+}
+
+/* ─── Panel ─── */
+#nai-tag-maestro-root .ntm-panel {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: var(--ntm-bg-panel);
+  border: 1px solid var(--ntm-border);
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: var(--ntm-radius-xl);
+  padding: 1rem 1rem 1.5rem;
+  position: relative;
+  box-shadow:
+    var(--ntm-shadow-lg),
+    0 0 0 1px rgba(0, 0, 0, 0.2),
+    0 20px 60px rgba(0, 0, 0, 0.3);
+  /* NOTE: no overflow:hidden here — it would clip position:fixed modals
+     since #nai-tag-maestro-root (position:fixed) is their containing block */
+}
+
+/* ─── Glow (subtle, static) ─── */
+.ntm-glow {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  z-index: 0;
+}
+.ntm-glow::before {
+  content: '';
+  position: absolute;
+  inset: -40%;
+  background:
+    radial-gradient(ellipse at 10% 0%, rgba(var(--ntm-accent-rgb), 0.09), transparent 50%),
+    radial-gradient(ellipse at 90% 100%, rgba(var(--ntm-teal-rgb), 0.06), transparent 45%),
+    radial-gradient(ellipse at 50% 50%, rgba(var(--ntm-accent-rgb), 0.02), transparent 70%);
+}
+
+/* ─── Header ─── */
+.ntm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  cursor: grab;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--ntm-border);
+  position: relative;
+  z-index: 1;
+}
+.ntm-header:active {
+  cursor: grabbing;
+}
+
+.ntm-title {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.ntm-title__logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: var(--ntm-radius-md);
+  background: linear-gradient(135deg, rgba(var(--ntm-accent-rgb), 0.15), rgba(var(--ntm-teal-rgb), 0.08));
+  border: 1px solid rgba(var(--ntm-accent-rgb), 0.25);
+  box-shadow: 0 0 12px rgba(var(--ntm-accent-rgb), 0.1);
+}
+.ntm-title__logo svg {
+  width: 1.2rem;
+  height: 1.2rem;
+  color: var(--ntm-accent-bright);
+}
+
+.ntm-title h1 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ntm-text-bright);
+}
+
+.ntm-header-actions {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+/* ─── Header divider ─── */
+.ntm-header-divider {
+  display: block;
+  width: 1px;
+  height: 1.2rem;
+  background: var(--ntm-border);
+  margin: 0 0.15rem;
+  flex-shrink: 0;
+}
+
+/* ─── Language toggle group ─── */
+.ntm-lang-group {
+  display: flex;
+  gap: 2px;
+  background: var(--ntm-bg-base);
+  border-radius: var(--ntm-radius-sm);
+  padding: 2px;
+  border: 1px solid var(--ntm-border-subtle);
+}
+
+/* ─── Pill (language toggle) ─── */
+.ntm-pill {
+  padding: 0.25rem 0.55rem;
+  border-radius: calc(var(--ntm-radius-sm) - 2px);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--ntm-text-muted);
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease, transform 80ms ease;
+}
+.ntm-pill:hover {
+  background: var(--ntm-bg-elevated);
+  color: var(--ntm-text-dim);
+}
+.ntm-pill:active {
+  transform: scale(0.93);
+}
+.ntm-pill.active {
+  background: rgba(var(--ntm-accent-rgb), 0.18);
+  border-color: rgba(var(--ntm-accent-rgb), 0.3);
+  color: var(--ntm-accent-bright);
+  box-shadow: 0 1px 4px rgba(var(--ntm-accent-rgb), 0.12);
+}
+
+/* ─── Icon Button ─── */
+.ntm-icon-btn {
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: var(--ntm-radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ntm-bg-elevated);
+  border: 1px solid var(--ntm-border);
+  color: var(--ntm-text-dim);
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease, transform 80ms ease, box-shadow 120ms ease;
+}
+.ntm-icon-btn svg {
+  width: 0.9em;
+  height: 0.9em;
+  flex-shrink: 0;
+}
+.ntm-icon-btn:hover {
+  background: var(--ntm-bg-hover);
+  color: var(--ntm-text);
+  border-color: var(--ntm-border-active);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+.ntm-icon-btn:active {
+  transform: scale(0.9);
+  background: var(--ntm-bg-card);
+  box-shadow: none;
+}
+
+/* ─── Page navigation ─── */
+.ntm-page-nav {
+  display: flex;
+  gap: 3px;
+  background: var(--ntm-bg-base);
+  border-radius: var(--ntm-radius-md);
+  padding: 3px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+  border: 1px solid var(--ntm-border-subtle);
+}
+
+.ntm-page-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: calc(var(--ntm-radius-md) - 2px);
+  background: transparent;
+  color: var(--ntm-text-muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  border: 1px solid transparent;
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+  flex: 1 1 auto;
+  justify-content: center;
+}
+.ntm-page-tab__icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.ntm-page-tab__icon svg {
+  width: 0.9em;
+  height: 0.9em;
+  opacity: 0.6;
+  transition: opacity 150ms ease;
+}
+.ntm-page-tab__label {
+  white-space: nowrap;
+}
+.ntm-page-tab:hover {
+  background: var(--ntm-bg-elevated);
+  color: var(--ntm-text-dim);
+}
+.ntm-page-tab:hover .ntm-page-tab__icon svg {
+  opacity: 0.8;
+}
+.ntm-page-tab:active {
+  background: var(--ntm-bg-hover);
+}
+.ntm-page-tab.active {
+  background: var(--ntm-bg-card);
+  color: var(--ntm-accent-bright);
+  font-weight: 600;
+  border-color: rgba(var(--ntm-accent-rgb), 0.25);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(var(--ntm-accent-rgb), 0.08);
+}
+.ntm-page-tab.active .ntm-page-tab__icon svg {
+  opacity: 1;
+  color: var(--ntm-accent);
+}
+
+/* ─── Page container ─── */
+.ntm-page-container {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  overflow: auto;
+  min-height: 0;
+  min-width: 0;
+  padding-bottom: 0.3rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* ─── Resize handle ─── */
+.ntm-resize-handle {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 14px;
+  height: 14px;
+  cursor: nwse-resize;
+  opacity: 0.4;
+  z-index: 2;
+  transition: opacity 120ms ease;
+}
+.ntm-resize-handle::before,
+.ntm-resize-handle::after {
+  content: '';
+  position: absolute;
+  background: var(--ntm-muted);
+  border-radius: 1px;
+}
+.ntm-resize-handle::before {
+  width: 10px; height: 1.5px;
+  bottom: 3px; right: 0;
+  transform: rotate(-45deg);
+}
+.ntm-resize-handle::after {
+  width: 6px; height: 1.5px;
+  bottom: 1px; right: 0;
+  transform: rotate(-45deg);
+}
+.ntm-resize-handle:hover {
+  opacity: 0.8;
+}
+
+/* ─── Minimized toggle (draggable capsule) ─── */
+.ntm-minimized-toggle {
+  position: fixed;
+  padding: 0.55rem 1.2rem 0.55rem 0.85rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--ntm-bg-panel), var(--ntm-bg-elevated));
+  color: var(--ntm-accent-bright);
+  border: 1px solid rgba(var(--ntm-accent-rgb), 0.35);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  pointer-events: auto;
+  z-index: var(--ntm-z-context);
+  user-select: none;
+  box-shadow:
+    var(--ntm-shadow-md),
+    0 0 16px rgba(var(--ntm-accent-rgb), 0.08);
+  transition: border-color 120ms ease, box-shadow 120ms ease, transform 80ms ease, background 120ms ease;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.ntm-minimized-toggle::before {
+  content: '';
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ntm-accent);
+  box-shadow: 0 0 6px rgba(var(--ntm-accent-rgb), 0.5);
+  flex-shrink: 0;
+}
+.ntm-minimized-toggle:hover {
+  border-color: rgba(var(--ntm-accent-rgb), 0.6);
+  box-shadow:
+    var(--ntm-shadow-lg),
+    0 0 24px rgba(var(--ntm-accent-rgb), 0.15);
+  background: linear-gradient(135deg, var(--ntm-bg-elevated), var(--ntm-bg-hover));
+}
+.ntm-minimized-toggle:active {
+  transform: scale(0.95);
+}
+
+/* ─── Toast ─── */
+.ntm-toast-stack {
+  position: fixed;
+  right: 2rem;
+  top: 2rem;
+  display: grid;
+  gap: 0.5rem;
+  z-index: var(--ntm-z-toast);
+  pointer-events: auto;
+}
+
+.ntm-toast {
+  background: var(--ntm-bg-panel);
+  border-radius: var(--ntm-radius-md);
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--ntm-border);
+  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow:
+    var(--ntm-shadow-md),
+    0 8px 24px rgba(0, 0, 0, 0.2);
+  color: var(--ntm-text);
+  backdrop-filter: blur(8px);
+}
+.ntm-toast.success {
+  border-left: 3px solid var(--ntm-success);
+}
+.ntm-toast.error {
+  border-left: 3px solid var(--ntm-error);
+}
+.ntm-toast.warn {
+  border-left: 3px solid var(--ntm-warning);
+}
+.ntm-toast.info {
+  border-left: 3px solid rgba(var(--ntm-accent-rgb), 0.7);
+}
+
+/* ─── Loader ─── */
+.ntm-loader {
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  border: 2px solid var(--ntm-border);
+  border-top-color: var(--ntm-accent);
+  animation: ntm-spin 600ms linear infinite;
+}
+
+/* ─── Empty state ─── */
+.ntm-empty {
+  text-align: center;
+  padding: 2rem 1rem;
+  font-size: 0.85rem;
+  color: var(--ntm-muted);
+}
+
+/* ─── Error text ─── */
+.ntm-error {
+  color: var(--ntm-error);
+  font-size: 0.78rem;
+}
+
+/* ─── Link ─── */
+.ntm-link {
+  color: var(--ntm-accent);
+  text-decoration: none;
+  font-size: 0.75rem;
+}
+.ntm-link:hover {
+  text-decoration: underline;
+}
+
+/* ─── Reduced motion ─── */
+#nai-tag-maestro-root.ntm-shell--reduced-motion .ntm-glow {
+  display: none;
+}
+#nai-tag-maestro-root.ntm-shell--reduced-motion * {
+  animation: none !important;
+  transition: none !important;
+}
