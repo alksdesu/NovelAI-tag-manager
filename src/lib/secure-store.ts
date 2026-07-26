@@ -1,6 +1,7 @@
 /**
- * Secure API key storage using GM_setValue (Tampermonkey encrypted storage).
- * Falls back to localStorage if GM APIs are not available.
+ * API key storage via GM_setValue — isolated from page scripts, unlike
+ * localStorage which any same-origin script on novelai.net can read.
+ * Falls back to localStorage only when GM APIs are unavailable.
  */
 
 const API_KEY_PREFIX = 'novelai-tag-maestro::apiKey::';

@@ -17,8 +17,7 @@ import {
   openTagForm,
   copyCategory,
   deleteCategory,
-  moveTag,
-  clampedPage,
+  moveTagById,
   exportLibrary,
   importLibrary,
   batchMode,
@@ -31,19 +30,18 @@ import {
   batchMoveToCategory,
   selectAllTags,
 } from './useLibrary';
-import { TAGS_PER_PAGE } from '../../constants';
 import { For, createSignal } from 'solid-js';
 import { IconCheck } from '../../components/Icons';
 
 export function LibraryPage() {
   const t = useLocale();
-  const [dragIdx, setDragIdx] = createSignal<number | null>(null);
+  const [dragTagId, setDragTagId] = createSignal<string | null>(null);
 
-  function handleDragStart(e: DragEvent, pageIndex: number) {
+  function handleDragStart(e: DragEvent, tagId: string) {
     if (!e.dataTransfer) return;
-    setDragIdx(pageIndex);
+    setDragTagId(tagId);
     e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', String(pageIndex));
+    e.dataTransfer.setData('text/plain', tagId);
   }
 
   function handleDragOver(e: DragEvent) {
@@ -51,17 +49,16 @@ export function LibraryPage() {
     if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
   }
 
-  function handleDrop(e: DragEvent, targetPageIndex: number) {
+  function handleDrop(e: DragEvent, targetTagId: string) {
     e.preventDefault();
-    const fromPageIdx = dragIdx();
-    if (fromPageIdx === null || fromPageIdx === targetPageIndex) return;
-    const offset = (clampedPage() - 1) * TAGS_PER_PAGE;
-    moveTag(offset + fromPageIdx, offset + targetPageIndex);
-    setDragIdx(null);
+    const sourceTagId = dragTagId();
+    if (!sourceTagId) return;
+    moveTagById(sourceTagId, targetTagId);
+    setDragTagId(null);
   }
 
   function handleDragEnd() {
-    setDragIdx(null);
+    setDragTagId(null);
   }
 
   return (
@@ -72,34 +69,44 @@ export function LibraryPage() {
         <SearchBar />
         <div class="ntm-quick-actions">
           <button class="ntm-btn" onClick={() => openTagForm()}>
-            {t().library.addTag}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span class="ntm-btn__label">{t().library.addTag}</span>
           </button>
           <button class="ntm-btn ntm-btn--ghost" onClick={() => openCategoryForm()}>
-            {t().library.addCategory}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
+            <span class="ntm-btn__label">{t().library.addCategory}</span>
           </button>
-          <Show when={activeCategory()}>
-            <button class="ntm-btn ntm-btn--ghost" onClick={() => openCategoryForm(activeCategory()!.id)}>
-              {t().library.editCategory}
-            </button>
-            <button class="ntm-btn ntm-btn--danger" onClick={deleteCategory}>
-              {t().library.deleteCurrentCategory}
-            </button>
-            <button class="ntm-btn ntm-btn--ghost" onClick={copyCategory}>
-              {t().library.copyCategory}
-            </button>
-            <button class="ntm-btn ntm-btn--ghost" onClick={exportLibrary}>
-              {t().library.exportData}
-            </button>
-            <button class="ntm-btn ntm-btn--ghost" onClick={importLibrary}>
-              {t().library.importData}
-            </button>
-          </Show>
           <button
             class={`ntm-btn ${batchMode() ? '' : 'ntm-btn--ghost'}`}
             onClick={toggleBatchMode}
           >
-            {batchMode() ? t().library.batchCancel : t().library.batchMode}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+            <span class="ntm-btn__label">{batchMode() ? t().library.batchCancel : t().library.batchMode}</span>
           </button>
+          <div class="ntm-quick-actions--secondary">
+            <Show when={activeCategory()}>
+              <button class="ntm-btn ntm-btn--ghost" title={t().library.editCategory} onClick={() => openCategoryForm(activeCategory()!.id)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                <span class="ntm-btn__label">{t().library.editCategory}</span>
+              </button>
+              <button class="ntm-btn ntm-btn--danger" title={t().library.deleteCurrentCategory} onClick={deleteCategory}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                <span class="ntm-btn__label">{t().library.deleteCurrentCategory}</span>
+              </button>
+              <button class="ntm-btn ntm-btn--ghost" title={t().library.copyCategory} onClick={copyCategory}>
+                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span class="ntm-btn__label">{t().library.copyCategory}</span>
+              </button>
+            </Show>
+            <button class="ntm-btn ntm-btn--ghost" title={t().library.exportData} onClick={exportLibrary}>
+               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              <span class="ntm-btn__label">{t().library.exportData}</span>
+            </button>
+            <button class="ntm-btn ntm-btn--ghost" title={t().library.importData} onClick={importLibrary}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              <span class="ntm-btn__label">{t().library.importData}</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -125,14 +132,14 @@ export function LibraryPage() {
           }
         >
           <For each={paginatedTags()}>
-            {(tag, idx) => (
+            {(tag) => (
               <div
                 draggable={!batchMode()}
-                onDragStart={(e) => !batchMode() && handleDragStart(e, idx())}
+                onDragStart={(e) => !batchMode() && handleDragStart(e, tag.id)}
                 onDragOver={!batchMode() ? handleDragOver : undefined}
-                onDrop={(e) => !batchMode() && handleDrop(e, idx())}
+                onDrop={(e) => !batchMode() && handleDrop(e, tag.id)}
                 onDragEnd={handleDragEnd}
-                class={`ntm-tag-card-drag-wrap ${dragIdx() === idx() ? 'ntm-tag-card-drag-wrap--dragging' : ''} ${batchMode() && isTagSelected(tag.id) ? 'ntm-tag-card-drag-wrap--selected' : ''}`}
+                class={`ntm-tag-card-drag-wrap ${dragTagId() === tag.id ? 'ntm-tag-card-drag-wrap--dragging' : ''} ${batchMode() && isTagSelected(tag.id) ? 'ntm-tag-card-drag-wrap--selected' : ''}`}
                 onClick={() => batchMode() && toggleTagSelection(tag.id)}
               >
                 <Show when={batchMode()}>

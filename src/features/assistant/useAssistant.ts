@@ -6,6 +6,7 @@ import { copyToClipboard } from '../../lib/clipboard';
 import {
   ASSISTANT_DEFAULT_TITLE,
   ASSISTANT_CONVERSATION_LIMIT,
+  ASSISTANT_MESSAGE_LIMIT,
   ASSISTANT_MAX_ATTACHMENTS,
   ASSISTANT_MAX_FILE_BYTES,
 } from '../../constants';
@@ -49,6 +50,7 @@ const [confirmDelete, setConfirmDelete] = createSignal(false);
 const [modelsLoading, setModelsLoading] = createSignal(false);
 const [search, setSearch] = createSignal('');
 const [pendingMessageId, setPendingMessageId] = createSignal<string | null>(null);
+const [sidebarOpen, setSidebarOpen] = createSignal(false);
 
 let abortFn: (() => void) | null = null;
 
@@ -215,6 +217,7 @@ function createConversation() {
   setData('assistant', 'activeConversationId', conv.id);
   setRenaming(false);
   setConfirmDelete(false);
+  setSidebarOpen(false);
 }
 
 function selectConversation(id: string) {
@@ -222,6 +225,7 @@ function selectConversation(id: string) {
   setRenaming(false);
   setRenameDraft('');
   setConfirmDelete(false);
+  setSidebarOpen(false);
 }
 
 function deleteConversation(id: string) {
@@ -241,7 +245,12 @@ function renameConversation(id: string, title: string) {
   setRenaming(false);
 }
 
-async function sendMessage() {
+/**
+ * Send a message. With no argument, sends and clears the composer.
+ * With overrideText (retry/regenerate), sends that text directly and
+ * leaves the composer draft and its attachments untouched.
+ */
+async function sendMessage(overrideText?: string) {
   if (sending()) return;
 
   const provider = activeProvider();
@@ -255,8 +264,9 @@ async function sendMessage() {
     return;
   }
 
-  const text = compose().trim();
-  const atts = attachments();
+  const fromComposer = overrideText === undefined;
+  const text = (fromComposer ? compose() : overrideText).trim();
+  const atts = fromComposer ? attachments() : [];
   if (!text && !atts.length) return;
 
   // Ensure active conversation
@@ -276,13 +286,31 @@ async function sendMessage() {
   setData('assistant', 'conversations', idx, 'messages', currentMessages);
   setData('assistant', 'conversations', idx, 'updatedAt', Date.now());
 
-  // Clear composer and revoke preview URLs
-  setCompose('');
-  revokeAttachmentUrls(atts);
-  setAttachments([]);
+  if (fromComposer) {
+    setCompose('');
+    revokeAttachmentUrls(atts);
+    setAttachments([]);
+  }
   setSending(true);
   setError('');
   setPendingMessageId(userMsg.id);
+
+  const patchUserMessage = (patch: Record<string, unknown>) => {
+    const convIdx = findConvIdx(convId);
+    if (convIdx < 0) return null;
+    const msgIdx = data.assistant.conversations[convIdx].messages.findIndex(
+      (m) => m.id === userMsg.id,
+    );
+    if (msgIdx < 0) return null;
+    const current = data.assistant.conversations[convIdx].messages[msgIdx]
+      .metadata as Record<string, unknown>;
+    setData('assistant', 'conversations', convIdx, 'messages', msgIdx, 'metadata', {
+      ...current,
+      ...patch,
+    });
+    setData('assistant', 'conversations', convIdx, 'messages', msgIdx, 'updatedAt', Date.now());
+    return current;
+  };
 
   try {
     const prepared = await prepareAttachmentsForSend(atts);
@@ -292,8 +320,11 @@ async function sendMessage() {
     if (idx < 0) throw new Error('Conversation was deleted during send.');
 
     const conv = data.assistant.conversations[idx];
+    // History excludes the just-pushed user message: its text already fills
+    // {{user_input}}, keeping it in {{history}} would duplicate it
+    const historyMessages = conv.messages.filter((m) => m.id !== userMsg.id);
     const context = buildAssistantContext(
-      conv,
+      { ...conv, messages: historyMessages },
       data.categories,
       text,
       prepared,
@@ -306,7 +337,7 @@ async function sendMessage() {
       blueprint.messages,
       prepared,
       blueprint.userMessageIndex,
-      conv.messages,
+      historyMessages,
     );
     abortFn = abort;
 
@@ -316,16 +347,7 @@ async function sendMessage() {
     idx = findConvIdx(convId);
     if (idx < 0) throw new Error('Conversation was deleted during send.');
 
-    // Mark user message as sent
-    const msgIdx = data.assistant.conversations[idx].messages.findIndex(
-      (m) => m.id === userMsg.id,
-    );
-    if (msgIdx >= 0) {
-      setData('assistant', 'conversations', idx, 'messages', msgIdx, 'metadata', {
-        status: 'sent',
-      });
-      setData('assistant', 'conversations', idx, 'messages', msgIdx, 'updatedAt', Date.now());
-    }
+    patchUserMessage({ status: 'sent' });
 
     // Append assistant message (store thoughtSignature if present)
     const assistantMeta: Record<string, unknown> = { status: 'sent' };
@@ -338,10 +360,13 @@ async function sendMessage() {
       [],
       assistantMeta,
     );
-    const updatedMessages = [
+    let updatedMessages = [
       ...data.assistant.conversations[idx].messages,
       assistantMsg,
     ];
+    if (updatedMessages.length > ASSISTANT_MESSAGE_LIMIT) {
+      updatedMessages = updatedMessages.slice(-ASSISTANT_MESSAGE_LIMIT);
+    }
     setData('assistant', 'conversations', idx, 'messages', updatedMessages);
     setData('assistant', 'conversations', idx, 'updatedAt', Date.now());
 
@@ -351,19 +376,19 @@ async function sendMessage() {
     console.error('Assistant request failed', err);
     const errMsg = err instanceof Error ? err.message : 'Request failed.';
 
+    // A user-initiated stop marks the message cancelled and the abort
+    // surfaces here as an error — don't overwrite the cancelled state
     idx = findConvIdx(convId);
-    if (idx >= 0) {
-      const msgIdx = data.assistant.conversations[idx].messages.findIndex(
-        (m) => m.id === userMsg.id,
-      );
-      if (msgIdx >= 0) {
-        setData('assistant', 'conversations', idx, 'messages', msgIdx, 'metadata', {
-          status: 'error',
-          error: errMsg,
-        });
-      }
+    const msgIdx = idx >= 0
+      ? data.assistant.conversations[idx].messages.findIndex((m) => m.id === userMsg.id)
+      : -1;
+    const status = msgIdx >= 0
+      ? (data.assistant.conversations[idx].messages[msgIdx].metadata as Record<string, unknown>)?.status
+      : undefined;
+    if (status !== 'cancelled') {
+      patchUserMessage({ status: 'error', error: errMsg });
+      setError(errMsg);
     }
-    setError(errMsg);
   } finally {
     setPendingMessageId(null);
     setSending(false);
@@ -384,7 +409,9 @@ function stopGeneration() {
       const convIdx = data.assistant.conversations.findIndex((c) => c.id === conv.id);
       const msgIdx = conv.messages.findIndex((m) => m.id === msgId);
       if (convIdx >= 0 && msgIdx >= 0) {
+        const current = conv.messages[msgIdx].metadata as Record<string, unknown>;
         setData('assistant', 'conversations', convIdx, 'messages', msgIdx, 'metadata', {
+          ...current,
           status: 'cancelled',
           error: '',
         });
@@ -469,15 +496,11 @@ function retryMessage(messageId: string) {
   );
   setData('assistant', 'conversations', convIdx, 'messages', updated);
 
-  // Restore to composer and re-send — capture content to avoid race
-  const retryContent = userMsg.content || '';
-  revokeAttachmentUrls(attachments());
-  setAttachments([]);
-  setCompose(retryContent);
-  // Use queueMicrotask for tighter timing than setTimeout
-  queueMicrotask(() => {
-    if (compose() === retryContent) sendMessage();
-  });
+  // Attachments are ephemeral (base64 never persisted) — they cannot be re-sent
+  if (userMsg.attachments?.length) {
+    addToast(t().common.retryAttachmentsDropped, 'info');
+  }
+  sendMessage(userMsg.content || '');
 }
 
 function regenerateMessage(messageId: string) {
@@ -511,14 +534,10 @@ function regenerateMessage(messageId: string) {
   const updated = conv.messages.filter((_m, i) => i !== msgIdx);
   setData('assistant', 'conversations', convIdx, 'messages', updated);
 
-  // Re-send with same user content — capture content to avoid race
-  const regenContent = userMsg.content || '';
-  revokeAttachmentUrls(attachments());
-  setAttachments([]);
-  setCompose(regenContent);
-  queueMicrotask(() => {
-    if (compose() === regenContent) sendMessage();
-  });
+  if (userMsg.attachments?.length) {
+    addToast(t().common.retryAttachmentsDropped, 'info');
+  }
+  sendMessage(userMsg.content || '');
 }
 
 function addAttachments(files: FileList | File[]) {
@@ -612,6 +631,8 @@ export {
   search,
   setSearch,
   pendingMessageId,
+  sidebarOpen,
+  setSidebarOpen,
   // Derived
   conversations,
   activeConversation,

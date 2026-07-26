@@ -4,12 +4,20 @@ import { addToast, t } from '../../stores/ui';
 import { uid } from '../../lib/uid';
 import { copyToClipboard } from '../../lib/clipboard';
 import { coerceToString } from '../../lib/escape';
+import { normalizeCategories } from '../../stores/persistence';
 import { TAGS_PER_PAGE } from '../../constants';
 import type { Category, Tag, SearchMode } from '../../types';
 
 // ─── Signals ────────────────────────────────────────────────────
 
-const [currentCategoryId, setCurrentCategoryId] = createSignal<string | null>(null);
+const [currentCategoryId, setCurrentCategoryId] = createSignal<string | null>(
+  data.settings.lastCategoryId ?? null,
+);
+
+function rememberCategory(id: string | null) {
+  setCurrentCategoryId(id);
+  setData('settings', 'lastCategoryId', id ?? undefined);
+}
 const [searchTerm, setSearchTerm] = createSignal('');
 const [searchAll, setSearchAll] = createSignal(false);
 const [libraryPage, setLibraryPage] = createSignal(1);
@@ -123,9 +131,10 @@ const paginatedTags = createMemo<Tag[]>(() => {
 // ─── Category actions ───────────────────────────────────────────
 
 function switchCategory(id: string) {
-  setCurrentCategoryId(id);
+  rememberCategory(id);
   setLibraryPage(1);
   setSearchTerm('');
+  setSelectedTagIds(new Set<string>());
 }
 
 function openCategoryForm(editId?: string) {
@@ -158,7 +167,7 @@ function submitCategory(formData: { nameEn: string; nameZh: string; description?
       tags: [],
     };
     setData('categories', (cats) => [...cats, newCat]);
-    setCurrentCategoryId(newCat.id);
+    rememberCategory(newCat.id);
     addToast(t().common.categoryCreated, 'success');
   }
   closeCategoryForm();
@@ -178,7 +187,7 @@ function deleteCategory() {
     for (const tag of cat.tags) next.delete(tag.id);
     return next;
   });
-  setCurrentCategoryId(null);
+  rememberCategory(null);
   closeCategoryForm();
 
   addToast(t().library.deleteCategoryUndo, 'info', 5000, {
@@ -190,7 +199,7 @@ function deleteCategory() {
         next.splice(Math.min(catIndex, next.length), 0, snapshot);
         return next;
       });
-      setCurrentCategoryId(snapshot.id);
+      rememberCategory(snapshot.id);
       addToast(t().common.categoryUpdated, 'success');
     },
   });
@@ -285,7 +294,7 @@ async function copyTag(tagId: string) {
 
 function toggleBatchMode() {
   setBatchMode(!batchMode());
-  setSelectedTagIds(new Set());
+  setSelectedTagIds(new Set<string>());
 }
 
 function toggleTagSelection(tagId: string) {
@@ -306,45 +315,73 @@ function selectAllTags() {
   const current = selectedTagIds();
   const allSelected = all.length > 0 && all.every((tag) => current.has(tag.id));
   if (allSelected) {
-    setSelectedTagIds(new Set());
+    setSelectedTagIds(new Set<string>());
   } else {
     setSelectedTagIds(new Set(all.map((tag) => tag.id)));
   }
 }
 
+// Batch ops act on selected ids across ALL categories: cross-category
+// search (searchAll) lets users select tags outside the active category.
+
+function forgetTranslations(ids: Set<string>) {
+  setTranslatedTagIds((prev) => {
+    const next = new Set(prev);
+    for (const id of ids) next.delete(id);
+    return next;
+  });
+}
+
 async function batchCopy() {
-  const cat = activeCategory();
-  if (!cat) return;
   const selected = selectedTagIds();
-  const tags = cat.tags.filter((t) => selected.has(t.id));
+  const tags: Tag[] = [];
+  for (const cat of data.categories) {
+    for (const tag of cat.tags) {
+      if (selected.has(tag.id)) tags.push(tag);
+    }
+  }
+  if (tags.length === 0) return;
   const text = tags.map((t) => t.tag).join(', ');
   const ok = await copyToClipboard(text);
   if (ok) addToast(t().common.copiedTags, 'success');
 }
 
 function batchDelete() {
-  const catIdx = activeCategoryIndex();
-  if (catIdx < 0) return;
   const selected = selectedTagIds();
-  setData('categories', catIdx, 'tags', (tags) => tags.filter((t) => !selected.has(t.id)));
-  setSelectedTagIds(new Set());
+  for (let i = 0; i < data.categories.length; i++) {
+    if (data.categories[i].tags.some((t) => selected.has(t.id))) {
+      setData('categories', i, 'tags', (tags) => tags.filter((t) => !selected.has(t.id)));
+    }
+  }
+  forgetTranslations(selected);
+  setSelectedTagIds(new Set<string>());
   setBatchMode(false);
   addToast(t().common.tagDeleted, 'info');
 }
 
 function batchMoveToCategory(targetCategoryId: string) {
-  const srcIdx = activeCategoryIndex();
-  if (srcIdx < 0) return;
   const dstIdx = data.categories.findIndex((c) => c.id === targetCategoryId);
-  if (dstIdx < 0 || dstIdx === srcIdx) return;
+  if (dstIdx < 0) return;
 
   const selected = selectedTagIds();
-  const tagsToMove = data.categories[srcIdx].tags.filter((t) => selected.has(t.id));
+  const tagsToMove: Tag[] = [];
+  for (const cat of data.categories) {
+    if (cat.id === targetCategoryId) continue;
+    for (const tag of cat.tags) {
+      if (selected.has(tag.id)) tagsToMove.push(tag);
+    }
+  }
+  if (tagsToMove.length === 0) return;
   const cloned = JSON.parse(JSON.stringify(tagsToMove)) as Tag[];
 
-  setData('categories', srcIdx, 'tags', (tags) => tags.filter((t) => !selected.has(t.id)));
+  for (let i = 0; i < data.categories.length; i++) {
+    if (i === dstIdx) continue;
+    if (data.categories[i].tags.some((t) => selected.has(t.id))) {
+      setData('categories', i, 'tags', (tags) => tags.filter((t) => !selected.has(t.id)));
+    }
+  }
   setData('categories', dstIdx, 'tags', (tags) => [...tags, ...cloned]);
-  setSelectedTagIds(new Set());
+  setSelectedTagIds(new Set<string>());
   setBatchMode(false);
   addToast(t().common.tagUpdated, 'success');
 }
@@ -402,15 +439,13 @@ function importLibrary() {
     reader.onload = () => {
       try {
         const raw = JSON.parse(reader.result as string);
-        const cats = raw?.categories;
-        if (!Array.isArray(cats)) throw new Error('invalid');
-        // Validate each category
-        for (const cat of cats) {
-          if (!cat.id || !cat.name || !Array.isArray(cat.tags)) throw new Error('invalid');
-        }
+        // Same field-level normalization as storage load: malformed tags
+        // must not reach the render path mid-session
+        const cats = normalizeCategories(raw?.categories);
+        if (cats.length === 0 && !Array.isArray(raw?.categories)) throw new Error('invalid');
         // Merge: add new categories, skip duplicates by ID
         const existingIds = new Set(data.categories.map((c) => c.id));
-        const newCats = cats.filter((c: Category) => !existingIds.has(c.id));
+        const newCats = cats.filter((c) => !existingIds.has(c.id));
         if (newCats.length > 0) {
           setData('categories', (prev) => [...prev, ...newCats]);
         }
@@ -436,11 +471,17 @@ function moveCategory(fromIndex: number, toIndex: number) {
   });
 }
 
-function moveTag(fromIndex: number, toIndex: number) {
+// Id-based: display order (pinned-first sort, search filter) diverges
+// from storage order, so display indexes must never touch the array.
+function moveTagById(sourceTagId: string, targetTagId: string) {
+  if (sourceTagId === targetTagId) return;
   const catIdx = activeCategoryIndex();
   if (catIdx < 0) return;
 
   setData('categories', catIdx, 'tags', (tags) => {
+    const fromIndex = tags.findIndex((t) => t.id === sourceTagId);
+    const toIndex = tags.findIndex((t) => t.id === targetTagId);
+    if (fromIndex < 0 || toIndex < 0) return tags;
     const next = [...tags];
     const [moved] = next.splice(fromIndex, 1);
     next.splice(toIndex, 0, moved);
@@ -500,6 +541,6 @@ export {
   exportLibrary,
   importLibrary,
   // Drag sort
-  moveTag,
+  moveTagById,
   moveCategory,
 };

@@ -1,5 +1,5 @@
 import { createEffect } from 'solid-js';
-import type { AppData, PanelSize, DanbooruCredentials, TranslationCache } from '../types';
+import type { AppData, Category, PanelSize, DanbooruCredentials, TranslationCache } from '../types';
 import {
   STORAGE_KEY,
   STORAGE_SAVE_DEBOUNCE_MS,
@@ -20,6 +20,29 @@ import {
 } from '../constants';
 import { uid } from '../lib/uid';
 import { normalizeAssistantData } from '../features/assistant/normalizers';
+import { saveApiKey, loadApiKey } from '../lib/secure-store';
+
+/**
+ * Serialize AppData for localStorage with every `apiKey` field stripped:
+ * keys persist only in GM storage, which page scripts cannot read.
+ */
+function serializeAppData(d: AppData): string {
+  return JSON.stringify(d, (key, value) => (key === 'apiKey' ? undefined : value));
+}
+
+/** Restore API keys from GM storage; migrate legacy plaintext keys into it */
+function hydrateApiKeys(d: AppData) {
+  for (const provider of ['openai', 'google'] as const) {
+    const config = d.assistant[provider];
+    if (!config) continue;
+    const gmKey = loadApiKey(provider);
+    if (gmKey) {
+      config.apiKey = gmKey;
+    } else if (config.apiKey) {
+      saveApiKey(provider, config.apiKey);
+    }
+  }
+}
 
 // ─── Default data factory ───────────────────────────────────────
 
@@ -136,6 +159,32 @@ export function defaultData(): AppData {
 
 // ─── Data integrity ─────────────────────────────────────────────
 
+export function normalizeCategories(raw: unknown): Category[] {
+  if (!Array.isArray(raw)) return [];
+  const cats = raw.filter(
+    (c): c is Category => !!c && typeof c === 'object' && typeof (c as Category).id === 'string',
+  );
+  for (const cat of cats) {
+    if (!cat.name || typeof cat.name !== 'object') cat.name = { en: '', zh: '' };
+    if (typeof cat.name.en !== 'string') cat.name.en = '';
+    if (typeof cat.name.zh !== 'string') cat.name.zh = '';
+    if (typeof cat.accent !== 'string') cat.accent = '#D4956B';
+    if (cat.description !== undefined && typeof cat.description !== 'string') cat.description = '';
+    if (!Array.isArray(cat.tags)) cat.tags = [];
+    cat.tags = cat.tags.filter(
+      (t) => t && typeof t === 'object' && typeof t.id === 'string',
+    );
+    for (const tag of cat.tags) {
+      if (typeof tag.tag !== 'string') tag.tag = '';
+      if (!tag.label || typeof tag.label !== 'object') tag.label = { en: '', zh: '' };
+      if (typeof tag.label.en !== 'string') tag.label.en = '';
+      if (typeof tag.label.zh !== 'string') tag.label.zh = '';
+      if (typeof tag.notes !== 'string') tag.notes = '';
+    }
+  }
+  return cats;
+}
+
 function ensureDataIntegrity(raw: unknown): AppData {
   if (!raw || typeof raw !== 'object' || !Array.isArray((raw as AppData).categories)) {
     return defaultData();
@@ -152,31 +201,14 @@ function ensureDataIntegrity(raw: unknown): AppData {
   if (!['library', 'safebooru', 'danbooru', 'assistant'].includes(d.settings.lastActivePage)) {
     d.settings.lastActivePage = 'library';
   }
+  if (d.settings.lastCategoryId !== undefined && typeof d.settings.lastCategoryId !== 'string') {
+    delete d.settings.lastCategoryId;
+  }
 
   // Assistant — full deep normalization via normalizers.ts
   d.assistant = normalizeAssistantData(d.assistant);
 
-  // Categories normalization
-  d.categories = d.categories.filter(
-    (c) => c && typeof c === 'object' && typeof c.id === 'string',
-  );
-  for (const cat of d.categories) {
-    if (!cat.name || typeof cat.name !== 'object') cat.name = { en: '', zh: '' };
-    if (typeof cat.name.en !== 'string') cat.name.en = '';
-    if (typeof cat.name.zh !== 'string') cat.name.zh = '';
-    if (typeof cat.accent !== 'string') cat.accent = '#D4956B';
-    if (!Array.isArray(cat.tags)) cat.tags = [];
-    cat.tags = cat.tags.filter(
-      (t) => t && typeof t === 'object' && typeof t.id === 'string',
-    );
-    for (const tag of cat.tags) {
-      if (typeof tag.tag !== 'string') tag.tag = '';
-      if (!tag.label || typeof tag.label !== 'object') tag.label = { en: '', zh: '' };
-      if (typeof tag.label.en !== 'string') tag.label.en = '';
-      if (typeof tag.label.zh !== 'string') tag.label.zh = '';
-      if (typeof tag.notes !== 'string') tag.notes = '';
-    }
-  }
+  d.categories = normalizeCategories(d.categories);
 
   return d;
 }
@@ -184,14 +216,15 @@ function ensureDataIntegrity(raw: unknown): AppData {
 // ─── Load / Save: main data ─────────────────────────────────────
 
 export function loadFromStorage(): AppData {
+  let d: AppData;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return defaultData();
-    const parsed = JSON.parse(raw);
-    return ensureDataIntegrity(parsed);
+    d = raw ? ensureDataIntegrity(JSON.parse(raw)) : defaultData();
   } catch {
-    return defaultData();
+    d = defaultData();
   }
+  hydrateApiKeys(d);
+  return d;
 }
 
 let saveHandle: number | null = null;
@@ -203,8 +236,9 @@ function flushSave(serialized: string) {
   try {
     localStorage.setItem(STORAGE_KEY, serialized);
     lastSavedSignature = serialized;
-  } catch {
-    // localStorage full or unavailable
+  } catch (e) {
+    // Quota exceeded or storage unavailable — data is NOT being saved
+    console.warn('[tag-maestro] Failed to persist state', e);
   }
 }
 
@@ -230,20 +264,22 @@ function scheduleSave(serialized: string) {
 export function initPersistence(getData: () => AppData) {
   // Initialize signature
   try {
-    lastSavedSignature = JSON.stringify(getData());
+    lastSavedSignature = serializeAppData(getData());
   } catch {
     lastSavedSignature = '';
   }
 
-  // Auto-save effect: tracks all reactive properties in data
+  // Auto-save effect: tracks all reactive properties in data.
+  // JSON.stringify walks every store getter, so this subscribes deeply —
+  // but the replacer must not skip subtrees, only scalar fields.
   createEffect(() => {
-    const serialized = JSON.stringify(getData());
+    const serialized = serializeAppData(getData());
     scheduleSave(serialized);
   });
 
   // Flush on page unload
   const flush = () => {
-    const serialized = JSON.stringify(getData());
+    const serialized = serializeAppData(getData());
     flushSave(serialized);
   };
   window.addEventListener('pagehide', flush);
@@ -345,7 +381,7 @@ export function loadDanbooruCredentials(): DanbooruCredentials {
     // Try GM storage first
     if (typeof GM_getValue === 'function') {
       const gm = GM_getValue(DANBOORU_CREDENTIAL_KEY);
-      if (gm && typeof gm === 'object') {
+      if (gm) {
         const parsed = typeof gm === 'string' ? JSON.parse(gm) : gm;
         if (parsed.username || parsed.apiKey) {
           return {
@@ -373,9 +409,12 @@ export function loadDanbooruCredentials(): DanbooruCredentials {
 export function saveDanbooruCredentials(creds: DanbooruCredentials) {
   try {
     const serialized = JSON.stringify(creds);
-    localStorage.setItem(DANBOORU_CREDENTIAL_KEY, serialized);
     if (typeof GM_setValue === 'function') {
       GM_setValue(DANBOORU_CREDENTIAL_KEY, serialized);
+      // Page-readable plaintext copy is only a fallback for non-GM environments
+      try { localStorage.removeItem(DANBOORU_CREDENTIAL_KEY); } catch { /* ignore */ }
+    } else {
+      localStorage.setItem(DANBOORU_CREDENTIAL_KEY, serialized);
     }
   } catch { /* ignore */ }
 }

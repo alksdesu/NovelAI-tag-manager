@@ -3,7 +3,9 @@ import { data } from '../../stores/data';
 import { useLocale } from '../../i18n/useLocale';
 import { openTagForm, deleteTag, copyTag, isTagTranslated, toggleTagTranslation, moveTagToCategory, activeCategory, togglePinTag } from './useLibrary';
 import { TagFragments } from './TagFragments';
-import { IconPin, IconCopy, IconEdit, IconMore, IconTranslate, IconMove, IconTrash } from '../../components/Icons';
+import { injectToPrompt } from '../../lib/inject-prompt';
+import { addToast } from '../../stores/ui';
+import { IconPin, IconCopy, IconEdit, IconInject, IconMore, IconTranslate, IconMove, IconTrash } from '../../components/Icons';
 import type { Tag, Category } from '../../types';
 
 interface TagCardProps {
@@ -74,6 +76,19 @@ export function TagCard(props: TagCardProps) {
             onClick={(e) => { e.stopPropagation(); copyTag(props.tag.id); }}
           >
             <IconCopy />
+          </button>
+          {/* Inject into NovelAI prompt */}
+          <button
+            class="ntm-icon-btn"
+            title={t().library.injectTag}
+            aria-label={t().library.injectTag}
+            onClick={(e) => {
+              e.stopPropagation();
+              const ok = injectToPrompt(props.tag.tag);
+              addToast(ok ? t().common.injected : t().common.injectedFail, ok ? 'success' : 'error');
+            }}
+          >
+            <IconInject />
           </button>
           {/* Edit */}
           <button

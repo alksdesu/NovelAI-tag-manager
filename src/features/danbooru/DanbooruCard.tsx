@@ -10,11 +10,13 @@ interface DanbooruCardProps {
 
 export function DanbooruCard(props: DanbooruCardProps) {
   const t = useLocale();
-  // Use large_file_url for full image; for non-image types (video etc.) fallback to preview
+  // Grid thumbnails use preview_file_url — 24 full-size hotlinks per page
+  // is wasteful; the Viewer fetches the large image through the GM proxy
   const ext = () => (props.post.file_ext || '').toLowerCase();
   const imageUrl = () => {
-    if (DANBOORU_NON_IMAGE_EXTS.has(ext())) return props.post.preview_file_url || '';
-    return props.post.large_file_url || props.post.file_url || props.post.preview_file_url || '';
+    if (props.post.preview_file_url) return props.post.preview_file_url;
+    if (DANBOORU_NON_IMAGE_EXTS.has(ext())) return '';
+    return props.post.large_file_url || props.post.file_url || '';
   };
 
   return (

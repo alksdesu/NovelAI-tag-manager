@@ -25,10 +25,12 @@ const [results, setResults] = createSignal<SafebooruEntry[]>([]);
 const [loading, setLoading] = createSignal(false);
 const [error, setError] = createSignal('');
 const [hasSearched, setHasSearched] = createSignal(false);
+// Target category for the per-chip save button; null falls back to the first category
+const [saveCategoryId, setSaveCategoryId] = createSignal<string | null>(null);
 
 let requestId = 0;
 
-export { term, setTerm, results, loading, error, hasSearched };
+export { term, setTerm, results, loading, error, hasSearched, saveCategoryId, setSaveCategoryId };
 
 export function getCategoryName(id: number): string {
   return CATEGORY_MAP[id] ?? 'other';

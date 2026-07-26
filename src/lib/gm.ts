@@ -39,7 +39,7 @@ export function gmRequest(options: GmRequestOptions): GmRequestResult {
       headers: options.headers,
       data: options.data as string | Blob | FormData | undefined,
       timeout: options.timeout ?? 30000,
-      responseType: options.responseType as XMLHttpRequestResponseType | undefined,
+      responseType: options.responseType,
       onload(resp) {
         resolve({
           status: resp.status,

@@ -5,7 +5,7 @@ import { injectToPrompt } from '../../lib/inject-prompt';
 import { addToast } from '../../stores/ui';
 import { data, setData } from '../../stores/data';
 import { uid } from '../../lib/uid';
-import { getCategoryName, type SafebooruEntry } from './useSafebooru';
+import { getCategoryName, saveCategoryId, type SafebooruEntry } from './useSafebooru';
 import { IconSave } from '../../components/Icons';
 import type { Tag } from '../../types';
 
@@ -40,8 +40,8 @@ export function SafebooruResult(props: SafebooruResultProps) {
       addToast(t().common.createCategoryFirst, 'error');
       return;
     }
-    const cat = data.categories[0];
-    const catIdx = 0;
+    const targetId = saveCategoryId();
+    const catIdx = Math.max(0, data.categories.findIndex((c) => c.id === targetId));
     const newTag: Tag = {
       id: uid('tag'),
       tag: props.entry.value,

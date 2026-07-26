@@ -53,6 +53,7 @@ export const LOCALE = {
       emptyNoCategoryAction: 'Create Category',
       pinTag: 'Pin',
       unpinTag: 'Unpin',
+      injectTag: 'Inject into prompt',
       injectToPrompt: 'Inject to prompt',
       translate: 'Translate',
       edit: 'Edit',
@@ -70,6 +71,7 @@ export const LOCALE = {
       noResults: 'No matches found. Try a different term.',
       saveToLibrary: 'Save to library',
       savedToLibrary: 'Saved to library.',
+      saveTarget: 'Save to',
       postsLabel: 'posts',
       categoryLabels: {
         general: 'General',
@@ -127,6 +129,8 @@ export const LOCALE = {
     assistant: {
       title: 'Tag-aware Copilot',
       newChat: 'New chat',
+      toggleSidebar: 'Conversations',
+      thinking: 'Thinking…',
       sidebarSearch: 'Search conversations',
       noConversations: 'No conversations yet.',
       emptyStateHeading: 'Start a new conversation',
@@ -235,7 +239,7 @@ export const LOCALE = {
       export: 'Export Data',
       import: 'Import Data',
       danbooruAccountTitle: 'Danbooru Account',
-      danbooruLogged: 'Logged in as',
+      danbooruLogged: (username: string) => `Logged in as ${username}`,
       danbooruNotLogged: 'No Danbooru credentials saved.',
       username: 'Username',
       apiKey: 'API Key',
@@ -264,6 +268,7 @@ export const LOCALE = {
       messageCopyFailed: 'Failed to copy.',
       assistantReplied: 'Assistant replied.',
       requestCancelled: 'Request cancelled.',
+      retryAttachmentsDropped: 'Attachments from the original message are not re-sent.',
       configureFirst: 'Configure API key and model in settings first.',
       waitForRequest: 'Wait for the current request to finish.',
       retryAssistantOnly: 'Retry is only available for assistant responses.',
@@ -338,6 +343,7 @@ export const LOCALE = {
       emptyNoCategoryAction: '\u521B\u5EFA\u5206\u7C7B',
       pinTag: '\u7F6E\u9876',
       unpinTag: '\u53D6\u6D88\u7F6E\u9876',
+      injectTag: '\u6CE8\u5165\u63D0\u793A\u8BCD',
       injectToPrompt: '\u6CE8\u5165\u63D0\u793A\u8BCD',
       translate: '\u7FFB\u8BD1',
       edit: '\u7F16\u8F91',
@@ -355,6 +361,7 @@ export const LOCALE = {
       noResults: '\u672A\u627E\u5230\u76F8\u5173\u6807\u7B7E\uFF0C\u6362\u4E2A\u5173\u952E\u8BCD\u8BD5\u8BD5\u3002',
       saveToLibrary: '\u4FDD\u5B58\u5230\u6807\u7B7E\u5E93',
       savedToLibrary: '\u5DF2\u4FDD\u5B58\u5230\u6807\u7B7E\u5E93\u3002',
+      saveTarget: '\u5B58\u5165\u5206\u7C7B',
       postsLabel: '\u4F5C\u54C1',
       categoryLabels: {
         general: '\u901A\u7528',
@@ -412,6 +419,8 @@ export const LOCALE = {
     assistant: {
       title: '\u6807\u7B7E\u667A\u80FD\u52A9\u624B',
       newChat: '\u65B0\u5EFA\u5BF9\u8BDD',
+      toggleSidebar: '\u4F1A\u8BDD\u5217\u8868',
+      thinking: '\u601D\u8003\u4E2D\u2026',
       sidebarSearch: '\u641C\u7D22\u5386\u53F2\u5BF9\u8BDD',
       noConversations: '\u6682\u65E0\u5BF9\u8BDD\u8BB0\u5F55\u3002',
       emptyStateHeading: '\u5F00\u59CB\u65B0\u7684\u5BF9\u8BDD',
@@ -549,6 +558,7 @@ export const LOCALE = {
       messageCopyFailed: '\u590D\u5236\u5931\u8D25\u3002',
       assistantReplied: '\u52A9\u624B\u5DF2\u56DE\u590D\u3002',
       requestCancelled: '\u8BF7\u6C42\u5DF2\u53D6\u6D88\u3002',
+      retryAttachmentsDropped: '\u539F\u6D88\u606F\u7684\u9644\u4EF6\u4E0D\u4F1A\u968F\u91CD\u8BD5\u4E00\u8D77\u53D1\u9001\u3002',
       configureFirst: '\u8BF7\u5148\u5728\u8BBE\u7F6E\u4E2D\u914D\u7F6E API Key \u548C\u6A21\u578B\u3002',
       waitForRequest: '\u8BF7\u7B49\u5F85\u5F53\u524D\u8BF7\u6C42\u5B8C\u6210\u3002',
       retryAssistantOnly: '\u91CD\u8BD5\u4EC5\u9002\u7528\u4E8E\u52A9\u624B\u56DE\u590D\u3002',
@@ -569,6 +579,6 @@ export const LOCALE = {
       invalidJson: (status: number) => `\u65E0\u6548\u7684 JSON \u54CD\u5E94\uFF08HTTP ${status}\uFF09`,
     },
   },
-} as const;
+};
 
 export type LocaleStrings = (typeof LOCALE)['en'];

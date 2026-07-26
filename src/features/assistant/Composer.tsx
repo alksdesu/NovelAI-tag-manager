@@ -97,7 +97,7 @@ export function Composer() {
       {/* Textarea */}
       <div class="ntm-assistant__composer-input">
         <textarea
-          class="ntm-input ntm-input--textarea"
+          class="ntm-assistant__composer-textarea"
           placeholder={t().assistant.composerPlaceholder}
           value={compose()}
           onInput={(e) => {
@@ -131,14 +131,14 @@ export function Composer() {
           <Show
             when={!sending()}
             fallback={
-              <button class="ntm-btn" onClick={stopGeneration}>
+              <button class="ntm-composer-stop" onClick={stopGeneration}>
                 {t().assistant.stop}
               </button>
             }
           >
             <button
-              class="ntm-btn"
-              onClick={sendMessage}
+              class="ntm-composer-send"
+              onClick={() => sendMessage()}
               disabled={!compose().trim() && !attachments().length}
             >
               {t().assistant.send}

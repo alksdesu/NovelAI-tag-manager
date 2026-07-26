@@ -148,6 +148,13 @@ export async function fetchPosts() {
 
     const parsed = JSON.parse(resp.text || '[]');
     const posts = Array.isArray(parsed) ? (parsed as DanbooruPost[]) : [];
+    // hasNext is an estimate (full page = maybe more); when the total is an
+    // exact multiple of the page size the next page comes back empty — step back
+    if (posts.length === 0 && gallery.page > 1) {
+      setGallery('page', (p) => Math.max(1, p - 1));
+      setGallery('hasNext', false);
+      return;
+    }
     setGallery('posts', posts);
     setGallery('hasNext', posts.length === DANBOORU_PAGE_LIMIT);
   } catch (err) {

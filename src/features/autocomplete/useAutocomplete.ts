@@ -3,6 +3,7 @@ import { data } from '../../stores/data';
 import { gmRequest } from '../../lib/gm';
 import { splitTagFragments } from '../../lib/escape';
 import { lookupTagTranslation, getFragmentTranslation } from '../../lib/translation';
+import { findPromptTextarea, clearPromptTextareaCache } from '../../lib/prompt-detect';
 import {
   AUTOCOMPLETE_MAX_RESULTS,
   AUTOCOMPLETE_REMOTE_LIMIT,
@@ -44,88 +45,9 @@ let lastFragment = '';
 let suppressNextInput = false;
 let observer: MutationObserver | null = null;
 let pollTimer: ReturnType<typeof setInterval> | null = null;
-let cachedPromptInput: HTMLElement | null = null;
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 let bindingRafPending = false;
 let manuallyBound = false; // true when bound to an internal input (TagForm/Safebooru/Danbooru)
-
-// ─── Prompt textarea detection ──────────────────────────────────
-
-const PROMPT_SELECTORS = [
-  '[data-testid="positive-prompt"] textarea',
-  'textarea[data-testid="positive-prompt"]',
-  '[data-testid*="positive"] textarea',
-  'textarea[name="positive"]',
-  'textarea[name="prompt"]',
-  'textarea[aria-label*="Positive"]',
-  'textarea[placeholder*="Describe"]',
-  'textarea[placeholder*="提示词"]',
-  'textarea[placeholder*="prompt"]',
-];
-
-function isPromptTarget(el: Element | null): el is HTMLTextAreaElement {
-  if (!el) return false;
-  // Only accept actual textarea elements — contentEditable divs lack .value/.selectionStart
-  if (!(el instanceof HTMLTextAreaElement)) return false;
-  const testId = el.getAttribute('data-testid') || '';
-  const name = el.getAttribute('name') || '';
-  const label = el.getAttribute('aria-label') || '';
-  if (/negative/i.test(testId) || /negative/i.test(name) || /negative/i.test(label)) return false;
-  if (el.disabled) return false;
-  return true;
-}
-
-function scoreCandidate(el: Element): number {
-  let score = 0;
-  const testId = el.getAttribute('data-testid') || '';
-  const name = el.getAttribute('name') || '';
-  const placeholder = el.getAttribute('placeholder') || '';
-  const label = el.getAttribute('aria-label') || '';
-  const all = `${testId} ${name} ${placeholder} ${label}`.toLowerCase();
-
-  if (all.includes('positive')) score += 10;
-  if (all.includes('prompt')) score += 5;
-  if (all.includes('describe')) score += 3;
-  if (all.includes('negative')) score -= 20;
-  if (all.includes('memory')) score -= 10;
-
-  return score;
-}
-
-function findPromptInput(): HTMLTextAreaElement | null {
-  // Check cached
-  if (cachedPromptInput && isPromptTarget(cachedPromptInput) && document.contains(cachedPromptInput)) {
-    return cachedPromptInput as HTMLTextAreaElement;
-  }
-
-  // Try selectors
-  for (const sel of PROMPT_SELECTORS) {
-    try {
-      const el = document.querySelector(sel);
-      if (el && isPromptTarget(el)) {
-        cachedPromptInput = el;
-        return el;
-      }
-    } catch { /* ignore */ }
-  }
-
-  // Score all textareas
-  const textareas = document.querySelectorAll('textarea');
-  let best: HTMLTextAreaElement | null = null;
-  let bestScore = -Infinity;
-
-  for (const ta of textareas) {
-    if (!isPromptTarget(ta)) continue;
-    const s = scoreCandidate(ta);
-    if (s > bestScore) {
-      bestScore = s;
-      best = ta;
-    }
-  }
-
-  if (best) cachedPromptInput = best;
-  return best;
-}
 
 // ─── Local index ────────────────────────────────────────────────
 
@@ -178,11 +100,15 @@ function collectCandidates(query: string): AutocompleteEntry[] {
     }
   }
 
-  // Also full scan for substring matches
-  for (const entry of localEntries) {
-    if (!seen.has(entry.lower) && entry.lower.includes(q)) {
-      seen.add(entry.lower);
-      results.push(entry);
+  // Full scan only when prefix hits can't fill the dropdown: mid-string
+  // matches are a fallback, not worth O(N) per keystroke on a full page
+  if (results.length < AUTOCOMPLETE_MAX_RESULTS) {
+    for (const entry of localEntries) {
+      if (!seen.has(entry.lower) && entry.lower.includes(q)) {
+        seen.add(entry.lower);
+        results.push(entry);
+        if (results.length >= AUTOCOMPLETE_MAX_RESULTS) break;
+      }
     }
   }
 
@@ -200,9 +126,13 @@ function collectCandidates(query: string): AutocompleteEntry[] {
 
 // ─── Remote fetch ───────────────────────────────────────────────
 
+let remoteBackoffUntil = 0;
+const REMOTE_BACKOFF_MS = 10_000;
+
 async function fetchRemote(query: string) {
   if (query.length < AUTOCOMPLETE_MIN_REMOTE_CHARS) return;
   if (query === remoteQuery) return;
+  if (Date.now() < remoteBackoffUntil) return;
 
   const token = ++fetchToken;
 
@@ -215,7 +145,14 @@ async function fetchRemote(query: string) {
 
       if (token !== fetchToken) return;
 
+      if (resp.status < 200 || resp.status >= 300) {
+        // Error pages are HTML — back off instead of re-firing on every keystroke
+        remoteBackoffUntil = Date.now() + REMOTE_BACKOFF_MS;
+        return;
+      }
+
       const raw = JSON.parse(resp.text) as Array<{ label?: string; value?: string; post_count?: number }>;
+      remoteBackoffUntil = 0;
       remoteQuery = query;
       remoteHits = raw
         .map((item) => {
@@ -239,7 +176,9 @@ async function fetchRemote(query: string) {
           setVisible(true);
         }
       }
-    } catch { /* ignore remote failures */ }
+    } catch {
+      remoteBackoffUntil = Date.now() + REMOTE_BACKOFF_MS;
+    }
   }, 180);
 }
 
@@ -287,8 +226,8 @@ export function applyCompletion(text: string) {
 
   const before = value.slice(0, start);
   const after = value.slice(end);
-  // If there's already content after, just replace the fragment; otherwise add trailing comma
-  const suffix = after.startsWith(',') ? '' : after.length > 0 ? ', ' : ', ';
+  // `after` is either empty or starts with a comma (end is indexOf(',') or length)
+  const suffix = after.startsWith(',') ? '' : ', ';
   const newValue = `${before}${text}${suffix}${after}`;
 
   inputRef.value = newValue;
@@ -328,7 +267,9 @@ function handleInput() {
   fetchRemote(fragment);
 }
 
-function handleKeyDown(e: KeyboardEvent) {
+function handleKeyDown(evt: Event) {
+  if (!(evt instanceof KeyboardEvent)) return;
+  const e = evt;
   if (!visible()) return;
 
   const items = suggestions();
@@ -408,7 +349,7 @@ function unbind() {
 function attemptBinding() {
   // Don't override a manual binding (internal input focus)
   if (manuallyBound) return;
-  const prompt = findPromptInput();
+  const prompt = findPromptTextarea();
   if (prompt) {
     bindToInput(prompt, 'prompt');
   }
@@ -447,7 +388,7 @@ export function destroyAutocomplete() {
   debounceTimer = null;
   bindingRafPending = false;
   unbind();
-  cachedPromptInput = null;
+  clearPromptTextareaCache();
 }
 
 /**

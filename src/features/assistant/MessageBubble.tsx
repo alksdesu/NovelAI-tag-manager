@@ -107,7 +107,7 @@ export function MessageBubble(props: Props) {
 
         {/* Loading indicator */}
         <Show when={isPending()}>
-          <span class="ntm-assistant__message-indicator">{t().assistant.thinking ?? '...'}</span>
+          <span class="ntm-assistant__message-indicator">{t().assistant.thinking}</span>
         </Show>
       </div>
     </article>

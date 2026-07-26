@@ -33,7 +33,7 @@ export function SearchBar() {
   }
 
   return (
-    <div class="ntm-controls">
+    <>
       <div class="ntm-search__group">
         <div class="ntm-search__input-wrap">
           <input
@@ -64,6 +64,6 @@ export function SearchBar() {
           {t().library.searchAll}
         </button>
       </div>
-    </div>
+    </>
   );
 }

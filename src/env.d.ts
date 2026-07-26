@@ -31,6 +31,8 @@ interface GMXMLHttpRequestHandle {
   abort: () => void;
 }
 
+declare function GM_xmlhttpRequest(details: GMXMLHttpRequestDetails): GMXMLHttpRequestHandle;
+
 // GM_getValue / GM_setValue for secure storage
 declare function GM_getValue<T = unknown>(key: string, defaultValue?: T): T;
 declare function GM_setValue(key: string, value: unknown): void;

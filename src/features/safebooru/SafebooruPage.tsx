@@ -1,5 +1,6 @@
 import { Show, For } from 'solid-js';
 import { useLocale } from '../../i18n/useLocale';
+import { data } from '../../stores/data';
 import { SafebooruResult } from './SafebooruResult';
 import { bindAutocompleteToInput, unbindAutocomplete } from '../autocomplete/useAutocomplete';
 import {
@@ -10,6 +11,8 @@ import {
   error,
   hasSearched,
   searchSafebooru,
+  saveCategoryId,
+  setSaveCategoryId,
 } from './useSafebooru';
 
 export function SafebooruPage() {
@@ -46,6 +49,25 @@ export function SafebooruPage() {
           {t().safebooru.searchButton}
         </button>
       </div>
+
+      <Show when={data.categories.length > 1}>
+        <label class="ntm-safebooru__save-target">
+          <span>{t().safebooru.saveTarget}</span>
+          <select
+            class="ntm-input ntm-input--select"
+            value={saveCategoryId() ?? data.categories[0]?.id ?? ''}
+            onChange={(e) => setSaveCategoryId(e.currentTarget.value || null)}
+          >
+            <For each={data.categories}>
+              {(cat) => (
+                <option value={cat.id}>
+                  {data.settings.language === 'zh' && cat.name.zh ? cat.name.zh : cat.name.en}
+                </option>
+              )}
+            </For>
+          </select>
+        </label>
+      </Show>
 
       <div class="ntm-safebooru__results">
         <Show when={loading()}>

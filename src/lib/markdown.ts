@@ -31,8 +31,9 @@ function applyInlineFormatting(text: string): string {
   // Strikethrough ~~text~~
   output = output.replace(/~~([^~]+)~~/g, '<del>$1</del>');
 
-  // Restore inline code spans
-  output = output.replace(/\x00CODE(\d+)\x00/g, (_m, idx) => codeSlots[Number(idx)]);
+  // Restore inline code spans; a literal \x00CODE{n}\x00 in model output
+  // can reference a slot that doesn't exist — keep the raw text then
+  output = output.replace(/\x00CODE(\d+)\x00/g, (m, idx) => codeSlots[Number(idx)] ?? m);
 
   return output;
 }
@@ -157,10 +158,17 @@ function renderBlocks(text: string): string {
   return buffer.join('');
 }
 
+// ─── Strip hidden AI tags ───────────────────────────────────────
+function stripHiddenTags(text: string): string {
+  return text
+    .replace(/<safetySettings>[\s\S]*?<\/safetySettings>/gi, '')
+    .replace(/<disclaimer>[\s\S]*?<\/disclaimer>/gi, '');
+}
+
 // ─── Public API ─────────────────────────────────────────────────
 
 export function markdownToHtml(source: string): string {
-  const text = coerceToString(source);
+  const text = stripHiddenTags(coerceToString(source));
   if (!text) return '';
 
   // Split code blocks from prose

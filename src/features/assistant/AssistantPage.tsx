@@ -1,6 +1,6 @@
 import { Show } from 'solid-js';
 import { useLocale } from '../../i18n/useLocale';
-import { IconEdit, IconTrash, IconSettings } from '../../components/Icons';
+import { IconEdit, IconTrash, IconSettings, IconLibrary } from '../../components/Icons';
 import { Sidebar } from './Sidebar';
 import { Thread } from './Thread';
 import { Composer } from './Composer';
@@ -16,7 +16,8 @@ import {
   setConfirmDelete,
   deleteConversation,
   setShowSettings,
-  showSettings,
+  sidebarOpen,
+  setSidebarOpen,
 } from './useAssistant';
 import './assistant.css';
 
@@ -49,6 +50,14 @@ export function AssistantPage() {
       <div class="ntm-assistant__main">
         {/* Header */}
         <header class="ntm-assistant__header">
+          <button
+            class="ntm-pill ntm-assistant__sidebar-toggle"
+            title={t().assistant.toggleSidebar}
+            aria-label={t().assistant.toggleSidebar}
+            onClick={() => setSidebarOpen(!sidebarOpen())}
+          >
+            <IconLibrary />
+          </button>
           <div class="ntm-assistant__title">
             <Show
               when={!renaming()}

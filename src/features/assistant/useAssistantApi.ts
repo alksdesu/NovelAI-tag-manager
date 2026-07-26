@@ -166,8 +166,8 @@ export function extractOpenAIText(choice: Record<string, unknown>): string {
 const GOOGLE_DEFAULT_BASE = 'https://generativelanguage.googleapis.com';
 
 function getGoogleBaseUrl(config: ProviderConfig): string {
-  const custom = typeof config.baseUrl === 'string' && config.baseUrl.trim();
-  return custom ? config.baseUrl.trim().replace(/\/+$/, '') : GOOGLE_DEFAULT_BASE;
+  const custom = typeof config.baseUrl === 'string' ? config.baseUrl.trim() : '';
+  return custom ? custom.replace(/\/+$/, '') : GOOGLE_DEFAULT_BASE;
 }
 
 function buildGoogleModelPath(config: ProviderConfig): string {
@@ -261,7 +261,8 @@ export function buildGooglePayload(
 
   const modelPath = buildGoogleModelPath(config);
   const base = getGoogleBaseUrl(config);
-  const url = `${base}/v1beta/${modelPath}:generateContent?key=${encodeURIComponent(sanitizedKey)}`;
+  // Key travels in a header, not the query string — proxies log full URLs
+  const url = `${base}/v1beta/${modelPath}:generateContent`;
 
   const generation = getGeminiGeneration(config.model || '');
 
@@ -296,11 +297,10 @@ export function buildGooglePayload(
     }
   });
 
-  // 2. Real conversation history as separate turns (multi-turn support)
+  // 2. Real conversation history as separate turns (multi-turn support).
+  // Caller already excludes the current turn's user message.
   if (conversationHistory?.length) {
-    // Exclude the last user message (it's already in the blueprint via {{user_input}})
-    const historyWithoutLast = conversationHistory.slice(0, -1);
-    const historyTurns = buildHistoryContents(historyWithoutLast, generation);
+    const historyTurns = buildHistoryContents(conversationHistory, generation);
     contents.push(...historyTurns);
   }
 
@@ -318,7 +318,10 @@ export function buildGooglePayload(
 
   return {
     url,
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-goog-api-key': sanitizedKey,
+    },
     body: JSON.stringify(payload),
   };
 }
@@ -469,8 +472,8 @@ export async function loadModelList(
 
   if (provider === 'google') {
     const base = getGoogleBaseUrl(config);
-    const url = `${base}/v1beta/models?key=${encodeURIComponent(apiKey)}`;
-    const { promise } = gmRequest({ method: 'GET', url, headers: {} });
+    const url = `${base}/v1beta/models`;
+    const { promise } = gmRequest({ method: 'GET', url, headers: { 'x-goog-api-key': apiKey } });
     const resp = await promise;
     if (resp.status >= 400 || resp.status === 0) {
       let errMsg = `Request failed with status ${resp.status}`;

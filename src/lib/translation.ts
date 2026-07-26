@@ -62,6 +62,9 @@ export async function ensureTranslationDictionary(force = false): Promise<Record
         timeout: 15000,
       });
       const resp = await promise;
+      if (resp.status < 200 || resp.status >= 300) {
+        throw new Error(`Dictionary fetch failed: HTTP ${resp.status}`);
+      }
       const dict = JSON.parse(resp.text) as Record<string, string>;
       setDictionary(dict);
       saveDictionary(dict);
@@ -104,6 +107,10 @@ export async function translateText(text: string, targetLang = 'zh'): Promise<st
   const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
   const { promise } = gmRequest({ method: 'GET', url, timeout: 10000 });
   const resp = await promise;
+  // Rate limiting (429) returns an HTML page — surface a real error, not a SyntaxError
+  if (resp.status < 200 || resp.status >= 300) {
+    throw new Error(`Translation failed: HTTP ${resp.status}`);
+  }
   const body = JSON.parse(resp.text);
 
   let result = '';
