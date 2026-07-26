@@ -27,26 +27,10 @@
   gap: 0.75rem;
 }
 
-/* ─── Mobile: viewport ─── */
+/* ─── Small viewport (non-mobile-mode: small windows, tablets) ───
+   Panel position stays with the default anchor or the user's drag position;
+   .ntm-shell--mobile (mobile.css) owns true phone fullscreen. */
 @media (max-width: 780px) {
-  #nai-tag-maestro-root {
-    width: 92vw;
-    left: 50% !important;
-    transform: translateX(-50%);
-    right: auto;
-    bottom: 1.5rem;
-  }
-
-  .ntm-panel {
-    padding: 0.85rem;
-  }
-
-  #nai-tag-maestro-root.ntm-shell--tiny .ntm-panel {
-    padding: 0.7rem 0.7rem 1rem;
-  }
-
-  .ntm-tabs,
-  .ntm-quick-actions,
   .ntm-safebooru__search {
     justify-content: center;
   }

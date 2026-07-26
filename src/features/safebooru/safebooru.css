@@ -2,11 +2,12 @@
 .ntm-safebooru {
   background: var(--ntm-bg-card);
   border-radius: var(--ntm-radius-lg);
-  padding: 0.85rem;
+  padding: 1.2rem;
   border: 1px solid var(--ntm-border);
   display: grid;
-  gap: 0.6rem;
+  gap: 1rem;
   min-height: 0;
+  box-shadow: var(--ntm-shadow-sm);
 }
 
 .ntm-safebooru header {
@@ -15,79 +16,121 @@
   justify-content: space-between;
 }
 
+.ntm-safebooru header h2 {
+  font-family: var(--ntm-font-display);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--ntm-text-bright);
+}
+
 .ntm-safebooru__search {
   display: flex;
-  gap: 0.4rem;
+  gap: 0.5rem;
+}
+
+.ntm-safebooru__save-target {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ntm-text-dim);
+}
+.ntm-safebooru__save-target .ntm-input--select {
+  flex: 0 1 220px;
+  min-width: 140px;
 }
 
 .ntm-safebooru__results {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem;
+  gap: 0.5rem;
   min-height: 2rem;
 }
 
 /* ─── Safebooru chip ─── */
 .ntm-safebooru-chip-wrap {
   display: flex;
-  gap: 2px;
+  gap: 0.2rem;
   align-items: stretch;
+  animation: ntm-slide-up 300ms var(--ntm-ease-spring) backwards;
 }
+/* Staggered load */
+.ntm-safebooru-chip-wrap:nth-child(1) { animation-delay: 50ms; }
+.ntm-safebooru-chip-wrap:nth-child(2) { animation-delay: 100ms; }
+.ntm-safebooru-chip-wrap:nth-child(3) { animation-delay: 150ms; }
+.ntm-safebooru-chip-wrap:nth-child(4) { animation-delay: 200ms; }
+.ntm-safebooru-chip-wrap:nth-child(n+5) { animation-delay: 250ms; }
+
 .ntm-safebooru-chip__save {
-  font-size: 0.68rem;
-  width: 1.3rem;
+  font-size: 0.75rem;
+  width: 2rem;
   height: auto;
-  border-radius: 0 var(--ntm-radius-sm) var(--ntm-radius-sm) 0;
+  border-radius: 99px;
   opacity: 0;
   background: var(--ntm-bg-elevated);
   border: 1px solid var(--ntm-border);
-  border-left: none;
-  transition: opacity 80ms ease;
+  color: var(--ntm-muted);
+  transition: transform 200ms var(--ntm-ease-spring), background 200ms var(--ntm-ease-spring), border-color 200ms var(--ntm-ease-spring), color 200ms var(--ntm-ease-spring), box-shadow 200ms var(--ntm-ease-spring);
+  cursor: pointer;
+  transform: scale(0.9);
 }
 .ntm-safebooru-chip-wrap:hover .ntm-safebooru-chip__save {
-  opacity: 0.7;
+  opacity: 1;
+  transform: scale(1);
 }
 .ntm-safebooru-chip__save:hover {
-  opacity: 1 !important;
-  background: var(--ntm-bg-hover);
+  background: var(--ntm-accent);
+  color: #fff;
+  border-color: var(--ntm-accent);
+  transform: scale(1.1);
+  box-shadow: 0 4px 10px rgba(116, 192, 252, 0.3);
 }
 
 .ntm-safebooru-chip {
   border: 1px solid var(--ntm-border);
-  padding: 0.4rem 0.65rem;
-  border-radius: var(--ntm-radius-sm);
-  background: var(--ntm-bg-elevated);
-  color: var(--ntm-text);
+  padding: 0.5rem 0.8rem;
+  border-radius: 99px;
+  background: var(--ntm-bg-card);
+  color: var(--ntm-text-bright);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 1px;
-  font-size: 0.78rem;
+  gap: 2px;
+  font-size: 0.85rem;
+  font-family: var(--ntm-font-body);
+  font-weight: 700;
   cursor: pointer;
-  transition: border-color 80ms ease, background 80ms ease, transform 80ms ease;
+  transition: transform 200ms var(--ntm-ease-spring), background 200ms var(--ntm-ease-spring), border-color 200ms var(--ntm-ease-spring), color 200ms var(--ntm-ease-spring), box-shadow 200ms var(--ntm-ease-spring);
+  box-shadow: var(--ntm-shadow-sm);
 }
 .ntm-safebooru-chip:hover {
   background: var(--ntm-bg-hover);
-  border-color: rgba(var(--ntm-teal-rgb), 0.3);
+  border-color: var(--ntm-accent);
+  transform: translateY(-2px);
+  box-shadow: var(--ntm-shadow-md);
 }
 .ntm-safebooru-chip:active {
-  transform: scale(0.96);
+  transform: scale(0.95);
 }
 
 .ntm-safebooru-chip small {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   color: var(--ntm-muted);
+  font-weight: 600;
 }
 
 .ntm-safebooru-chip__translation {
-  color: var(--ntm-accent);
-  font-size: 0.68rem;
+  color: var(--ntm-accent-dim);
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 .ntm-safebooru-chip__translation--missing {
   color: var(--ntm-muted);
   font-style: italic;
+  font-weight: 400;
 }
 .ntm-safebooru-chip__meta {
   color: var(--ntm-text-dim);
-  font-size: 0.65rem;
+  font-size: 0.7rem;
 }

@@ -3,61 +3,63 @@
   --ntm-panel-default-width: min(560px, 92vw);
   --ntm-panel-default-height: min(82vh, 940px);
 
-  /* ─── Backgrounds: charcoal-navy, solid tones ─── */
-  --ntm-bg-base: #0d1117;
-  --ntm-bg-panel: #151b28;
-  --ntm-bg-card: #1a2233;
-  --ntm-bg-elevated: #212d42;
-  --ntm-bg-input: #111822;
-  --ntm-bg-hover: #253248;
+  /* ─── Backgrounds: Soft skies and white clouds ─── */
+  --ntm-bg-base: #F4F9FF; /* soft light blue */
+  --ntm-bg-panel: rgba(255, 255, 255, 0.95); /* translucent white for glass effect */
+  --ntm-bg-card: #FFFFFF;
+  --ntm-bg-elevated: #F8FBFF;
+  --ntm-bg-input: #FFFFFF;
+  --ntm-bg-hover: #EAF3FF;
 
-  /* ─── Accent: warm copper-amber ─── */
-  --ntm-accent: #c8956c;
-  --ntm-accent-rgb: 200, 149, 108;
-  --ntm-accent-dim: #a07850;
-  --ntm-accent-bright: #ddb08a;
+  /* ─── Accent: Primary Sky Blue ─── */
+  --ntm-accent: #74C0FC;
+  --ntm-accent-rgb: 116, 192, 252;
+  --ntm-accent-dim: #4DABF7;
+  --ntm-accent-bright: #A5D8FF;
 
-  /* ─── Secondary: muted teal ─── */
-  --ntm-teal: #5ab8a6;
-  --ntm-teal-rgb: 90, 184, 166;
+  /* ─── Secondary: Pastel Pink (Sakura) ─── */
+  --ntm-sakura: #FFA8A8;
+  --ntm-sakura-rgb: 255, 168, 168;
 
-  /* ─── Tertiary ─── */
-  --ntm-slate: #64748b;
-  --ntm-slate-rgb: 100, 116, 139;
+  /* ─── Tertiary: Soft Blue-Grey ─── */
+  --ntm-slate: #A5B4FC;
+  --ntm-slate-rgb: 165, 180, 252;
 
-  /* ─── Text ─── */
-  --ntm-text: #c9d1dc;
-  --ntm-text-bright: #e8ecf2;
-  --ntm-text-dim: #8896a8;
-  --ntm-muted: #5e6d80;
+  /* ─── Text: Deep Navy for readability ─── */
+  --ntm-text: #343A40;
+  --ntm-text-bright: #212529;
+  --ntm-text-dim: #495057;
+  --ntm-muted: #868E96;
 
   /* ─── Functional ─── */
-  --ntm-success: #4aad8b;
-  --ntm-success-rgb: 74, 173, 139;
-  --ntm-error: #d4574e;
-  --ntm-error-rgb: 212, 87, 78;
-  --ntm-warning: #d4a33e;
-  --ntm-warning-rgb: 212, 163, 62;
+  --ntm-success: #69DB7C;
+  --ntm-success-rgb: 105, 219, 124;
+  /* error is warmer than sakura so destructive actions read as danger, not decoration */
+  --ntm-error: #FF8787;
+  --ntm-error-rgb: 255, 135, 135;
+  --ntm-warning: #FFD43B;
+  --ntm-warning-rgb: 255, 212, 59;
 
-  /* ─── Borders: visible but understated ─── */
-  --ntm-border: #232f40;
-  --ntm-border-subtle: #1e2a3a;
-  --ntm-border-active: rgba(var(--ntm-accent-rgb), 0.45);
+  /* ─── Borders: Soft and pillowy ─── */
+  --ntm-border: #D0EBFF;
+  --ntm-border-subtle: #E7F5FF;
+  --ntm-border-active: #74C0FC;
 
-  /* ─── Radius: 3-tier system ─── */
-  --ntm-radius-sm: 6px;
-  --ntm-radius-md: 10px;
-  --ntm-radius-lg: 14px;
-  --ntm-radius-xl: 18px;
+  /* ─── Radius: Extra large and bubbly ─── */
+  --ntm-radius-sm: 8px;
+  --ntm-radius-md: 14px;
+  --ntm-radius-lg: 20px;
+  --ntm-radius-xl: 24px;
 
-  /* ─── Shadow ─── */
-  --ntm-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --ntm-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
-  --ntm-shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.45);
+  /* ─── Shadow: Soft and diffused ─── */
+  --ntm-shadow-sm: 0 2px 8px rgba(116, 192, 252, 0.12);
+  --ntm-shadow-md: 0 6px 16px rgba(116, 192, 252, 0.15);
+  --ntm-shadow-lg: 0 12px 32px rgba(116, 192, 252, 0.2);
 
   /* ─── Typography ─── */
-  --ntm-font-body: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
-  --ntm-font-mono: 'JetBrains Mono', 'Consolas', monospace;
+  --ntm-font-body: 'Inter', system-ui, sans-serif;
+  --ntm-font-display: 'Nunito', 'Inter', system-ui, sans-serif;
+  --ntm-font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
 
   /* ─── Spacing scale ─── */
   --ntm-sp-1: 4px;
@@ -67,6 +69,10 @@
   --ntm-sp-5: 20px;
   --ntm-sp-6: 24px;
   --ntm-sp-8: 32px;
+
+  /* ─── Animations (Bouncy/Jelly) ─── */
+  --ntm-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* overshoot for bounce */
+  --ntm-ease-snappy: cubic-bezier(0.4, 0, 0.2, 1);
 
   /* ─── Z-index ─── */
   --ntm-z-panel: 999999;

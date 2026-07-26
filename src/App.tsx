@@ -19,6 +19,7 @@ import './features/danbooru/danbooru.css';
 import './features/assistant/assistant.css';
 import './features/autocomplete/autocomplete.css';
 import './styles/responsive.css';
+import './styles/mobile.css';
 
 export default function App() {
   const pages: Page[] = ['library', 'safebooru', 'danbooru', 'assistant'];

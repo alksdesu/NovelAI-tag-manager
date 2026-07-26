@@ -1,12 +1,12 @@
-/* ─── Autocomplete dropdown ─── */
+/* ─── Autocomplete dropdown (Soft Bubble) ─── */
 .ntm-ac-dropdown {
   position: absolute;
   overflow-y: auto;
   max-height: 36vh;
   background: var(--ntm-bg-panel);
-  border: 1px solid var(--ntm-border);
-  border-radius: var(--ntm-radius-md);
-  padding: 4px;
+  border: 2px solid var(--ntm-border);
+  border-radius: var(--ntm-radius-lg);
+  padding: 0.4rem;
   box-shadow: var(--ntm-shadow-lg);
   z-index: var(--ntm-z-autocomplete);
 }
@@ -18,31 +18,49 @@
 .ntm-ac-item {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.4rem 0.55rem;
-  border-radius: var(--ntm-radius-sm);
+  gap: 0.2rem;
+  padding: 0.5rem 0.8rem;
+  border-radius: var(--ntm-radius-md);
   cursor: pointer;
-  transition: background 60ms ease;
+  transition: transform 150ms var(--ntm-ease-spring), background 150ms var(--ntm-ease-spring), border-color 150ms var(--ntm-ease-spring), color 150ms var(--ntm-ease-spring), box-shadow 150ms var(--ntm-ease-spring);
+  margin-bottom: 2px;
+}
+.ntm-ac-item:last-child {
+  margin-bottom: 0;
 }
 
 .ntm-ac-item:hover,
 .ntm-ac-item.is-active {
-  background: var(--ntm-bg-hover);
+  background: var(--ntm-accent);
+  transform: translateX(4px);
+}
+.ntm-ac-item.is-active .ntm-ac-text,
+.ntm-ac-item.is-active .ntm-ac-src,
+.ntm-ac-item.is-active .ntm-ac-translation {
+  color: #fff;
 }
 
 .ntm-ac-text {
-  font-size: 0.82rem;
-  color: var(--ntm-text);
-  font-family: var(--ntm-font-mono);
-  font-size: 0.78rem;
+  color: var(--ntm-text-bright);
+  font-family: var(--ntm-font-body);
+  font-weight: 700;
+  font-size: 0.85rem;
 }
 
 .ntm-ac-src {
-  font-size: 0.68rem;
-  color: var(--ntm-text-dim);
+  font-family: var(--ntm-font-body);
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--ntm-muted);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: rgba(0,0,0,0.05);
+  padding: 0.1rem 0.4rem;
+  border-radius: 99px;
+}
+.ntm-ac-item.is-active .ntm-ac-src {
+  background: rgba(255,255,255,0.25);
+  color: #fff;
 }
 
 .ntm-ac-line {
@@ -54,8 +72,10 @@
 }
 
 .ntm-ac-translation {
-  font-size: 0.72rem;
-  color: var(--ntm-muted);
+  font-family: var(--ntm-font-body);
+  font-size: 0.75rem;
+  color: var(--ntm-accent-dim);
+  font-weight: 600;
   width: 100%;
   text-align: left;
 }

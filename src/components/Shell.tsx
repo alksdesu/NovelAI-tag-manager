@@ -1,5 +1,4 @@
 import { createSignal, createEffect, onCleanup, Switch, Match, Show } from 'solid-js';
-import { Header } from './Header';
 import { Nav } from './Nav';
 import { Toast } from './Toast';
 import { LibraryPage } from '../features/library/LibraryPage';
@@ -18,8 +17,11 @@ import {
   PANEL_RESPONSIVE_COMPACT,
   PANEL_RESPONSIVE_NARROW,
   PANEL_RESPONSIVE_TINY,
+  PANEL_RESPONSIVE_MOBILE_VP,
 } from '../constants';
 import { useLocale } from '../i18n/useLocale';
+import { IconMinimize } from './Icons';
+import type { Language } from '../types';
 
 export function Shell() {
   const t = useLocale();
@@ -31,6 +33,7 @@ export function Shell() {
   const [isCompact, setIsCompact] = createSignal(false);
   const [isNarrow, setIsNarrow] = createSignal(false);
   const [isTiny, setIsTiny] = createSignal(false);
+  const [isMobile, setIsMobile] = createSignal(false);
 
   // Panel position
   const [pos, setPos] = createSignal(loadPosition() ?? { left: 0, top: 0 });
@@ -39,20 +42,33 @@ export function Shell() {
   // Panel size
   const [size, setSize] = createSignal(loadPanelSize());
 
-  // Sync minimized from persisted settings once on mount
-  createEffect(() => {
-    setIsMinimized(data.settings.minimized);
-  });
+  function setLanguage(lang: Language) {
+    setData('settings', 'language', lang);
+  }
 
-  // Sync minimize state back to persisted store
+  // Restore persisted minimized state once, then mirror signal → store
+  setIsMinimized(data.settings.minimized);
   createEffect(() => {
     setData('settings', 'minimized', isMinimized());
   });
 
-  // Apply position and size to root element (must live on #nai-tag-maestro-root since it has position:fixed)
+  // Apply position and size to root element (must live on #nai-tag-maestro-root
+  // since it has position:fixed). Mobile fullscreen shares this effect so that
+  // leaving mobile re-applies the saved desktop position/size instead of
+  // leaving stale inset styles behind.
   createEffect(() => {
     const el = rootEl();
     if (!el) return;
+
+    if (isMobile()) {
+      el.style.left = '0';
+      el.style.top = '0';
+      el.style.right = '0';
+      el.style.bottom = '0';
+      el.style.removeProperty('--ntm-panel-width');
+      el.style.removeProperty('--ntm-panel-height');
+      return;
+    }
 
     if (positioned()) {
       el.style.left = `${pos().left}px`;
@@ -86,6 +102,7 @@ export function Shell() {
     el.classList.toggle('ntm-shell--compact', isCompact());
     el.classList.toggle('ntm-shell--narrow', isNarrow());
     el.classList.toggle('ntm-shell--tiny', isTiny());
+    el.classList.toggle('ntm-shell--mobile', isMobile());
     el.classList.toggle('ntm-shell--reduced-motion', shouldReduceMotion());
   });
 
@@ -105,14 +122,24 @@ export function Shell() {
     onCleanup(() => observer.disconnect());
   });
 
+  // Mobile viewport detection
+  createEffect(() => {
+    const mql = window.matchMedia(`(pointer: coarse) and (max-width: ${PANEL_RESPONSIVE_MOBILE_VP}px)`);
+    const update = () => setIsMobile(mql.matches);
+    update();
+    mql.addEventListener('change', update);
+    onCleanup(() => mql.removeEventListener('change', update));
+  });
+
   // ─── Dragging ───
   const [dragging, setDragging] = createSignal(false);
   let dragOffset = { x: 0, y: 0 };
 
   function handleDragStart(e: PointerEvent) {
+    if (isMobile()) return;
     // Don't drag from action buttons
     const target = e.target as HTMLElement;
-    if (target.closest('.ntm-header-actions')) return;
+    if (target.closest('.ntm-dock-nav') || target.closest('.ntm-dock-bottom')) return;
 
     const el = rootEl();
     if (!el) return;
@@ -146,6 +173,7 @@ export function Shell() {
   let resizeStart = { x: 0, y: 0, w: 0, h: 0 };
 
   function handleResizeStart(e: PointerEvent) {
+    if (isMobile()) return;
     const el = rootEl();
     if (!el) return;
 
@@ -212,7 +240,7 @@ export function Shell() {
 
   return (
     <>
-      {/* Minimized toggle — draggable */}
+      {/* Minimized toggle — draggable glowing orb */}
       <Show when={isMinimized()}>
         <button
           class="ntm-minimized-toggle"
@@ -225,38 +253,80 @@ export function Shell() {
         </button>
       </Show>
 
-      {/* Main panel */}
+      {/* Main app layout */}
       <Show when={!isMinimized()}>
-        <div class="ntm-panel">
-          <div class="ntm-glow" />
-          <Header
+        <div class="ntm-app-layout">
+          {/* Magic Dock */}
+          <aside 
+            class="ntm-magic-dock"
             onPointerDown={handleDragStart}
             onPointerMove={handleDragMove}
             onPointerUp={handleDragEnd}
-          />
-          <Nav />
-          <div class="ntm-page-container">
-            <Switch fallback={<PlaceholderPage name={activePage()} />}>
-              <Match when={activePage() === 'library'}>
-                <LibraryPage />
-              </Match>
-              <Match when={activePage() === 'safebooru'}>
-                <SafebooruPage />
-              </Match>
-              <Match when={activePage() === 'danbooru'}>
-                <DanbooruPage />
-              </Match>
-              <Match when={activePage() === 'assistant'}>
-                <AssistantPage />
-              </Match>
-            </Switch>
-          </div>
-          <div
-            class="ntm-resize-handle"
-            onPointerDown={handleResizeStart}
-            onPointerMove={handleResizeMove}
-            onPointerUp={handleResizeEnd}
-          />
+          >
+            <div class="ntm-dock-logo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+            </div>
+            
+            <Nav />
+
+            <div class="ntm-dock-bottom">
+              <div class="ntm-dock-lang">
+                <button
+                  class={data.settings.language === 'en' ? 'active' : ''}
+                  onClick={() => setLanguage('en')}
+                >
+                  EN
+                </button>
+                <button
+                  class={data.settings.language === 'zh' ? 'active' : ''}
+                  onClick={() => setLanguage('zh')}
+                >
+                  ZH
+                </button>
+              </div>
+
+              <button
+                class="ntm-dock-minimize"
+                title={t().minimize}
+                aria-label={t().minimize}
+                onClick={() => setIsMinimized(true)}
+              >
+                <IconMinimize />
+              </button>
+            </div>
+          </aside>
+
+          {/* Cloud Board */}
+          <main class="ntm-cloud-board">
+            <div
+              class="ntm-cloud-board__drag-handle"
+              onPointerDown={handleDragStart}
+              onPointerMove={handleDragMove}
+              onPointerUp={handleDragEnd}
+            />
+            <div class="ntm-page-container">
+              <Switch fallback={<PlaceholderPage name={activePage()} />}>
+                <Match when={activePage() === 'library'}>
+                  <LibraryPage />
+                </Match>
+                <Match when={activePage() === 'safebooru'}>
+                  <SafebooruPage />
+                </Match>
+                <Match when={activePage() === 'danbooru'}>
+                  <DanbooruPage />
+                </Match>
+                <Match when={activePage() === 'assistant'}>
+                  <AssistantPage />
+                </Match>
+              </Switch>
+            </div>
+            <div
+              class="ntm-resize-handle"
+              onPointerDown={handleResizeStart}
+              onPointerMove={handleResizeMove}
+              onPointerUp={handleResizeEnd}
+            />
+          </main>
         </div>
       </Show>
 
@@ -277,7 +347,7 @@ function PlaceholderPage(props: { name: string }) {
       'justify-content': 'center',
       height: '100%',
       gap: '8px',
-      color: 'var(--ntm-text-muted)',
+      color: 'var(--ntm-muted)',
     }}>
       <span style={{ 'font-size': '24px', opacity: '0.4' }}>
         {props.name === 'library' ? '\u{1F3F7}' : props.name === 'safebooru' ? '\u{1F50D}' : props.name === 'danbooru' ? '\u{1F5BC}' : '\u{1F916}'}

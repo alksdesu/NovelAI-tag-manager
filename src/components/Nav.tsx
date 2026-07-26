@@ -15,17 +15,19 @@ export function Nav() {
   const t = useLocale();
 
   return (
-    <nav class="ntm-page-nav" role="tablist">
+    <nav class="ntm-dock-nav" role="tablist">
       <For each={PAGES}>
         {(page) => (
           <button
-            class={`ntm-page-tab ${activePage() === page.key ? 'active' : ''}`}
+            class={`ntm-dock-tab ${activePage() === page.key ? 'active' : ''}`}
             role="tab"
             aria-selected={activePage() === page.key}
             onClick={() => setActivePage(page.key)}
+            title={t().nav[page.localeKey]}
+            aria-label={t().nav[page.localeKey]}
           >
-            <span class="ntm-page-tab__icon">{page.icon()}</span>
-            <span class="ntm-page-tab__label">{t().nav[page.localeKey]}</span>
+            <span class="ntm-dock-tab__icon">{page.icon()}</span>
+            <span class="ntm-dock-tab__label">{t().nav[page.localeKey]}</span>
           </button>
         )}
       </For>

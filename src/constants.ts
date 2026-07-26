@@ -5,10 +5,6 @@ export const STORAGE_KEY = `${STORAGE_NAMESPACE}::state::${STORAGE_VERSION}`;
 export const STORAGE_SAVE_DEBOUNCE_MS = 120;
 export const TRANSLATION_CACHE_KEY = `${STORAGE_NAMESPACE}::translations`;
 export const POSITION_KEY = `${STORAGE_NAMESPACE}::position`;
-export const CLOUD_INDEX_URL = '';
-export const CLOUD_CACHE_KEY = `${STORAGE_NAMESPACE}::cloudIndex::v1`;
-export const CLOUD_CACHE_AT_KEY = `${STORAGE_NAMESPACE}::cloudIndexFetchedAt`;
-export const CLOUD_CACHE_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
 
 // Autocomplete
 export const AUTOCOMPLETE_MAX_RESULTS = 12;
@@ -44,6 +40,7 @@ export const PANEL_MARGIN_Y = 48;
 export const PANEL_RESPONSIVE_COMPACT = 760;
 export const PANEL_RESPONSIVE_NARROW = 560;
 export const PANEL_RESPONSIVE_TINY = 420;
+export const PANEL_RESPONSIVE_MOBILE_VP = 480;
 
 // Tag form sizing
 export const TAG_FORM_SIZE_KEY = `${STORAGE_NAMESPACE}::tagFormSize`;
@@ -58,7 +55,6 @@ export const MOTION_REDUCTION_TAG_THRESHOLD = 240;
 // AI Assistant
 export const ASSISTANT_MAX_ATTACHMENTS = 6;
 export const ASSISTANT_MAX_FILE_BYTES = 12 * 1024 * 1024; // 12 MB
-export const ASSISTANT_OBJECT_URL_TTL_MS = 1000 * 60 * 15; // 15 min
 export const ASSISTANT_CONVERSATION_LIMIT = 64;
 export const ASSISTANT_MESSAGE_LIMIT = 512;
 export const ASSISTANT_DEFAULT_TITLE = 'New Chat';
