@@ -32,7 +32,8 @@ export function AssistantSettings() {
     setData('assistant', 'provider', provider);
   }
   function setBaseUrl(value: string) {
-    setData('assistant', 'openai', 'baseUrl', value);
+    const provider = activeProvider();
+    setData('assistant', provider, 'baseUrl', value);
   }
   function setApiKey(value: string) {
     const provider = activeProvider();
@@ -56,84 +57,93 @@ export function AssistantSettings() {
       })()}
       <div class="ntm-assistant-settings">
         <div class="ntm-assistant-settings__backdrop" onClick={() => setShowSettings(false)} />
-        <div class="ntm-assistant-settings__panel ntm-assistant-settings__panel--animate">
-          <header style={{ display: 'flex', 'align-items': 'center', 'justify-content': 'space-between' }}>
-            <h2>{t().assistant.settingsTitle}</h2>
+        <div class="ntm-assistant-settings__panel">
+          <header class="ntm-assistant-settings__header">
+            <h2 class="ntm-assistant-settings__title">{t().assistant.settingsTitle}</h2>
             <button class="ntm-icon-btn" onClick={() => setShowSettings(false)} title={t().assistant.closeSettings}>
               <IconClose />
             </button>
           </header>
 
-          {/* Provider */}
+          {/* Provider toggle */}
           <div class="ntm-assistant-settings__section">
-            <h4>{t().assistant.providerLabel}</h4>
-            <div class="ntm-assistant-settings__provider">
-              <label>
-                <input type="radio" name="ntm-provider" value="openai" checked={activeProvider() === 'openai'} onChange={() => setProvider('openai')} />
-                {' '}{t().assistant.providerOpenAI}
-              </label>
-              <label>
-                <input type="radio" name="ntm-provider" value="google" checked={activeProvider() === 'google'} onChange={() => setProvider('google')} />
-                {' '}{t().assistant.providerGoogle}
-              </label>
+            <label class="ntm-assistant-settings__label">{t().assistant.providerLabel}</label>
+            <div class="ntm-assistant-settings__toggle">
+              <button
+                class={`ntm-assistant-settings__toggle-btn ${activeProvider() === 'openai' ? 'ntm-assistant-settings__toggle-btn--active' : ''}`}
+                onClick={() => setProvider('openai')}
+              >
+                {t().assistant.providerOpenAI}
+              </button>
+              <button
+                class={`ntm-assistant-settings__toggle-btn ${activeProvider() === 'google' ? 'ntm-assistant-settings__toggle-btn--active' : ''}`}
+                onClick={() => setProvider('google')}
+              >
+                {t().assistant.providerGoogle}
+              </button>
             </div>
           </div>
 
-          {/* Base URL (OpenAI only) */}
-          <Show when={activeProvider() === 'openai'}>
-            <div class="ntm-assistant-settings__section">
-              <h4>{t().assistant.baseUrlLabel}</h4>
-              <input
-                class="ntm-input"
-                type="text"
-                value={data.assistant.openai.baseUrl || ''}
-                onInput={(e) => setBaseUrl(e.currentTarget.value)}
-                placeholder="https://api.openai.com/v1"
-              />
-            </div>
-          </Show>
-
-          {/* Google hint */}
-          <Show when={activeProvider() === 'google'}>
-            <p class="ntm-assistant-settings__status">{t().assistant.googleKeyHint}</p>
-          </Show>
+          {/* Base URL */}
+          <div class="ntm-assistant-settings__section">
+            <label class="ntm-assistant-settings__label">Base URL</label>
+            <input
+              class="ntm-input"
+              type="text"
+              value={activeConfig().baseUrl || ''}
+              onInput={(e) => setBaseUrl(e.currentTarget.value)}
+              placeholder={activeProvider() === 'google'
+                ? 'https://generativelanguage.googleapis.com'
+                : 'https://api.openai.com/v1'
+              }
+            />
+            <p class="ntm-assistant-settings__hint">
+              {activeProvider() === 'google'
+                ? '留空使用官方地址，填写自定义反代地址可绕过区域限制'
+                : '留空使用官方地址，支持兼容 OpenAI 格式的第三方服务'
+              }
+            </p>
+          </div>
 
           {/* Thinking Level (Google only) */}
           <Show when={activeProvider() === 'google'}>
             <div class="ntm-assistant-settings__section">
-              <h4>Thinking Level</h4>
-              <select
-                class="ntm-input ntm-input--select"
-                value={data.assistant.google.thinkingLevel || ''}
-                onChange={(e) => setData('assistant', 'google', 'thinkingLevel', e.currentTarget.value)}
-              >
-                <option value="">Auto (Default)</option>
-                <option value="low">Low — 快速回复</option>
-                <option value="medium">Medium — 平衡</option>
-                <option value="high">High — 深度推理</option>
-              </select>
-              <p class="ntm-assistant-settings__status">
-                Gemini 3.x 使用 thinkingLevel, 2.5 自动切换为 thinkingBudget
+              <label class="ntm-assistant-settings__label">Thinking Level</label>
+              <div class="ntm-assistant-settings__segmented">
+                {(['', 'low', 'medium', 'high'] as const).map((level) => {
+                  const labels: Record<string, string> = { '': 'Auto', low: 'Low', medium: 'Medium', high: 'High' };
+                  return (
+                    <button
+                      class={`ntm-assistant-settings__seg-btn ${(data.assistant.google.thinkingLevel || '') === level ? 'ntm-assistant-settings__seg-btn--active' : ''}`}
+                      onClick={() => setData('assistant', 'google', 'thinkingLevel', level)}
+                    >
+                      {labels[level]}
+                    </button>
+                  );
+                })}
+              </div>
+              <p class="ntm-assistant-settings__hint">
+                Gemini 3.x → thinkingLevel, 2.5 → thinkingBudget
               </p>
             </div>
           </Show>
 
           {/* API Key */}
           <div class="ntm-assistant-settings__section">
-            <h4>{t().assistant.apiKeyLabel}</h4>
+            <label class="ntm-assistant-settings__label">{t().assistant.apiKeyLabel}</label>
             <input
               class="ntm-input"
               type="password"
               value={activeConfig().apiKey || ''}
               onInput={(e) => setApiKey(e.currentTarget.value)}
-              placeholder="sk-..."
+              placeholder={activeProvider() === 'google' ? 'AIza...' : 'sk-...'}
             />
           </div>
 
           {/* Model */}
           <div class="ntm-assistant-settings__section">
-            <h4>{t().assistant.modelLabel}</h4>
-            <div class="ntm-assistant-settings__section--two">
+            <label class="ntm-assistant-settings__label">{t().assistant.modelLabel}</label>
+            <div class="ntm-assistant-settings__model-row">
               <input
                 class="ntm-input"
                 type="text"
@@ -147,24 +157,22 @@ export function AssistantSettings() {
                   {(m) => <option value={m.id}>{m.label}</option>}
                 </For>
               </datalist>
-              <div class="ntm-assistant-settings__actions">
-                <button
-                  class="ntm-mini-btn"
-                  onClick={refreshModels}
-                  disabled={modelsLoading()}
-                  title={t().assistant.refreshModels}
-                >
-                  <Show when={!modelsLoading()} fallback={<div class="ntm-loader" style={{ width: '14px', height: '14px' }} />}>
-                    <IconRefresh />
-                  </Show>
-                </button>
-              </div>
+              <button
+                class="ntm-assistant-settings__refresh-btn"
+                onClick={refreshModels}
+                disabled={modelsLoading()}
+                title={t().assistant.refreshModels}
+              >
+                <Show when={!modelsLoading()} fallback={<div class="ntm-loader" style={{ width: '14px', height: '14px' }} />}>
+                  <IconRefresh />
+                </Show>
+              </button>
             </div>
             <Show when={modelsLoading()}>
-              <p class="ntm-assistant-settings__status">{t().assistant.modelsLoading}</p>
+              <p class="ntm-assistant-settings__hint">{t().assistant.modelsLoading}</p>
             </Show>
             <Show when={!modelsLoading() && activeConfig().modelsFetchedAt > 0}>
-              <p class="ntm-assistant-settings__status">
+              <p class="ntm-assistant-settings__hint">
                 {t().assistant.modelsUpdated(formatTimestamp(activeConfig().modelsFetchedAt))}
               </p>
             </Show>

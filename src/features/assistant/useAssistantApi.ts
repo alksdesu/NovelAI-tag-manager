@@ -163,6 +163,13 @@ export function extractOpenAIText(choice: Record<string, unknown>): string {
 
 // ─── Google ─────────────────────────────────────────────────────
 
+const GOOGLE_DEFAULT_BASE = 'https://generativelanguage.googleapis.com';
+
+function getGoogleBaseUrl(config: ProviderConfig): string {
+  const custom = typeof config.baseUrl === 'string' && config.baseUrl.trim();
+  return custom ? config.baseUrl.trim().replace(/\/+$/, '') : GOOGLE_DEFAULT_BASE;
+}
+
 function buildGoogleModelPath(config: ProviderConfig): string {
   const model =
     typeof config.model === 'string' && config.model.trim()
@@ -253,7 +260,8 @@ export function buildGooglePayload(
   if (!sanitizedKey) throw new Error('Google API key is missing.');
 
   const modelPath = buildGoogleModelPath(config);
-  const url = `https://generativelanguage.googleapis.com/v1beta/${modelPath}:generateContent?key=${encodeURIComponent(sanitizedKey)}`;
+  const base = getGoogleBaseUrl(config);
+  const url = `${base}/v1beta/${modelPath}:generateContent?key=${encodeURIComponent(sanitizedKey)}`;
 
   const generation = getGeminiGeneration(config.model || '');
 
@@ -460,7 +468,8 @@ export async function loadModelList(
   }
 
   if (provider === 'google') {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`;
+    const base = getGoogleBaseUrl(config);
+    const url = `${base}/v1beta/models?key=${encodeURIComponent(apiKey)}`;
     const { promise } = gmRequest({ method: 'GET', url, headers: {} });
     const resp = await promise;
     if (resp.status >= 400 || resp.status === 0) {
